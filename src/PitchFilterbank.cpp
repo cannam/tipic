@@ -8,6 +8,8 @@
 #include "filter-a.h"
 #include "filter-b.h"
 
+#include <stdexcept>
+
 using namespace std;
 
 static const int HIGHEST_FILTER_INDEX_AT_882 = 38;   // MIDI pitch 59
@@ -76,14 +78,15 @@ private:
     // has effective delay filter_delay[20+n].
     vector<Filter> m_filters;
 
-    static int filterIndexForMidiPitch(int pitch) {
+    int filterIndexForMidiPitch(int pitch) const {
 	return pitch - 21;
     }
-    static int filterDelay(int filterIndex) {
+    int filterDelay(int filterIndex) const {
 	return filter_delay[20 + filterIndex];
     }
-    static int totalDelay(int filterIndex) {
-	return filterDelay(filterIndex) + resamplerFor(filterIndex).getLatency();
+    int totalDelay(int filterIndex) const {
+	return filterDelay(filterIndex) +
+	    const_cast<D *>(this)->resamplerFor(filterIndex).getLatency();
     }
 };
 

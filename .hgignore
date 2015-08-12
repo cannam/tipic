@@ -2,3 +2,6 @@ syntax: glob
 *~
 *.orig
 *.o
+*.so
+*.a
+*.bak
