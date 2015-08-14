@@ -14,7 +14,7 @@ AR	?= ar
 RANLIB	?= ranlib
 
 CFLAGS := $(CFLAGS)
-CXXFLAGS := $(CFLAGS) -I. -I$(VAMPSDK_DIR) -I$(CQ_DIR) -I$(BQVEC_DIR) -I$(BQVEC_DIR) -I$(CQ_DIR)/src/dsp $(CXXFLAGS)
+CXXFLAGS := $(CFLAGS) -I. -I$(VAMPSDK_DIR) -I$(CQ_DIR) -I$(BQVEC_DIR) -I$(BQVEC_DIR)/bqvec -I$(CQ_DIR)/src/dsp $(CXXFLAGS)
 
 LDFLAGS := $(LDFLAGS) 
 PLUGIN_LDFLAGS := $(LDFLAGS) $(PLUGIN_LDFLAGS)
@@ -29,8 +29,8 @@ LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp
 LIB_OBJECTS	:= $(LIB_SOURCES:.cpp=.o)
 LIB_OBJECTS	:= $(LIB_OBJECTS:.c=.o)
 
-PLUGIN_HEADERS := 
-PLUGIN_SOURCES := 
+PLUGIN_HEADERS  := $(SRC_DIR)/TipicVampPlugin.h
+PLUGIN_SOURCES  := $(SRC_DIR)/TipicVampPlugin.cpp
 
 BQVEC_HEADERS	:= $(BQVEC_DIR)/Allocators.h $(BQVEC_DIR)/Restrict.h $(BQVEC_DIR)/VectorOps.h
 BQVEC_SOURCES	:= $(BQVEC_DIR)/src/Allocators.cpp
@@ -48,7 +48,7 @@ all: constant-q-cpp $(LIBRARY) $(PLUGIN)
 constant-q-cpp: 
 	$(MAKE) -C $@ -f Makefile$(MAKEFILE_EXT) libcq.a
 
-$(PLUGIN):	$(PLUGIN_OBJECTS) $(LIBS)
+$(PLUGIN):	$(OBJECTS) $(LIBS)
 	$(CXX) -o $@ $^ $(LIBS) $(PLUGIN_LDFLAGS)
 
 $(LIBRARY):    $(LIB_OBJECTS)
