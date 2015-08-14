@@ -1,8 +1,21 @@
 
 #include "TipicVampPlugin.h"
 
+#include <bqvec/Range.h>
+#include <bqvec/VectorOps.h>
+
+#include <iostream>
+
+using namespace std;
+
+using namespace breakfastquay;
+
 Tipic::Tipic(float inputSampleRate) :
-    Plugin(inputSampleRate)
+    Plugin(inputSampleRate),
+    m_stepSize(0),
+    m_blockSize(0),
+    m_filterbank(inputSampleRate),
+    m_pitchOutputNo(-1)
 {
 }
 
@@ -139,6 +152,7 @@ Tipic::getOutputDescriptors() const
     d.sampleType = OutputDescriptor::FixedSampleRate;
     d.sampleRate = 4410.0 / m_inputSampleRate;
     d.hasDuration = false;
+    m_pitchOutputNo = list.size();
     list.push_back(d);
 
     return list;
@@ -147,27 +161,70 @@ Tipic::getOutputDescriptors() const
 bool
 Tipic::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
+    if (m_pitchOutputNo < 0) {
+	// getOutputDescriptors has never been called, it sets up the
+	// outputNo members
+	(void)getOutputDescriptors();
+    }
+    
     if (channels < getMinChannelCount() ||
-	channels > getMaxChannelCount()) return false;
+	channels > getMaxChannelCount()) {
+	cerr << "ERROR: initialise: wrong number of channels supplied (only 1 supported)" << endl;
+	return false;
+    }
 
+    m_stepSize = stepSize;
+    m_blockSize = blockSize;
+    
+    if (m_stepSize != m_blockSize) {
+	cerr << "ERROR: initialise: step size and block size must be equal" << endl;
+	return false;
+    }
+    
+    reset();
+    
     return true;
 }
 
 void
 Tipic::reset()
 {
-    // Clear buffers, reset stored values, etc
+    m_filterbank.reset();
 }
 
 Tipic::FeatureSet
 Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 {
-    return FeatureSet();
+    PitchFilterbank::RealSequence in;
+    in.resize(m_blockSize);
+    v_convert(in.data(), inputBuffers[0], m_blockSize);
+    
+    PitchFilterbank::RealBlock pitchFiltered = m_filterbank.process(in);
+
+    FeatureSet fs;
+    addPitchFeatures(fs, pitchFiltered);
+    return fs;
 }
 
 Tipic::FeatureSet
 Tipic::getRemainingFeatures()
 {
-    return FeatureSet();
+    PitchFilterbank::RealBlock pitchFiltered = m_filterbank.getRemainingOutput();
+
+    FeatureSet fs;
+    addPitchFeatures(fs, pitchFiltered);
+    return fs;
+}
+
+void
+Tipic::addPitchFeatures(FeatureSet &fs, const PitchFilterbank::RealBlock &block)
+{
+    for (int i = 0; in_range_for(block, i); ++i) {
+	Feature f;
+	int h = block[i].size();
+	f.values.resize(h);
+	v_convert(f.values.data(), block[i].data(), h);
+	fs[m_pitchOutputNo].push_back(f);
+    }
 }
 

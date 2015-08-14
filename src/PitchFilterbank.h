@@ -20,6 +20,8 @@ public:
     /// A matrix of real-valued samples, indexed by time then bin number.
     typedef std::vector<RealColumn> RealBlock;
 
+    void reset();
+    
     RealBlock process(const RealSequence &);
 
     RealBlock getRemainingOutput();

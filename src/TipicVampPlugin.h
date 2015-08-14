@@ -3,6 +3,8 @@
 
 #include <vamp-sdk/Plugin.h>
 
+#include "PitchFilterbank.h"
+
 using std::string;
 
 class Tipic : public Vamp::Plugin
@@ -43,9 +45,13 @@ public:
     FeatureSet getRemainingFeatures();
 
 protected:
-    
-};
+    int m_stepSize;
+    int m_blockSize;
+    PitchFilterbank m_filterbank;
+    mutable int m_pitchOutputNo;
 
+    void addPitchFeatures(FeatureSet &, const PitchFilterbank::RealBlock &);
+};
 
 
 #endif

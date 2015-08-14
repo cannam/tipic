@@ -35,8 +35,11 @@ public:
 	}
     }
 	
-    ~D();
+    ~D() {
+    }
 
+    int getSampleRate() const { return m_sampleRate; }
+    
     /// A series of real-valued samples ordered in time.
     typedef vector<double> RealSequence;
 
@@ -89,4 +92,34 @@ private:
 	    const_cast<D *>(this)->resamplerFor(filterIndex).getLatency();
     }
 };
+
+PitchFilterbank::PitchFilterbank(int sampleRate) :
+    m_d(new D(sampleRate))
+{
+}
+
+PitchFilterbank::~PitchFilterbank()
+{
+    delete m_d;
+}
+
+void
+PitchFilterbank::reset()
+{
+    int rate = m_d->getSampleRate();
+    delete m_d;
+    m_d = new D(rate);
+}
+
+PitchFilterbank::RealBlock
+PitchFilterbank::process(const RealSequence &in)
+{
+    return m_d->process(in);
+}
+
+PitchFilterbank::RealBlock
+PitchFilterbank::getRemainingOutput()
+{
+    return m_d->getRemainingOutput();
+}
 
