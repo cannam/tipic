@@ -71,7 +71,7 @@ public:
 	    if (m_resampled.find(rate) == m_resampled.end()) {
 		throw logic_error("No resampled output for rate of filter");
 	    }
-	    pushFiltered(i, m_resampled[rate]);
+	    pushFiltered(i, m_resampled[rate], false);
 	}
 
 	return energiesFromFiltered(false);
@@ -86,7 +86,7 @@ public:
 
 	for (int i = 0; i < m_nfilters; ++i) {
 	    int rate = filterRate(i);
-	    pushFiltered(i, m_resampled[rate]);
+	    pushFiltered(i, m_resampled[rate], true);
 	}
 	
 	return energiesFromFiltered(true);
@@ -120,30 +120,51 @@ public:
 	    }
 	}
 
-	int minCols = 0;
+	int minCols = 0, maxCols = 0;
 	for (int i = 0; i < m_nfilters; ++i) {
 	    int n = m_energies[i].size();
-	    if (i == 0 || n < minCols) {
-		minCols = n;
-	    }
+	    if (i == 0 || n < minCols) minCols = n;
+	    if (i == 0 || n > maxCols) maxCols = n;
 	}
+
+	RealBlock out;
 	
-	RealBlock out(minCols);
-	for (int j = 0; j < minCols; ++j) {
-	    for (int i = 0; i < m_nfilters; ++i) {
-		out[j].push_back(m_energies[i][0]);
-		m_energies[i].pop_front();
+	if (drain) {
+	    out.resize(maxCols);
+	    for (int j = 0; j < maxCols; ++j) {
+		for (int i = 0; i < m_nfilters; ++i) {
+		    if (m_energies[i].size() == 0) {
+			out[j].push_back(0.0);
+		    } else {
+			out[j].push_back(m_energies[i][0]);
+			m_energies[i].pop_front();
+		    }
+		}
+	    }
+	} else {
+	    out.resize(minCols);
+	    for (int j = 0; j < minCols; ++j) {
+		for (int i = 0; i < m_nfilters; ++i) {
+		    out[j].push_back(m_energies[i][0]);
+		    m_energies[i].pop_front();
+		}
 	    }
 	}
 
 	return out;
     }
     
-    void pushFiltered(int i, const RealSequence &resampled) {
+    void pushFiltered(int i, const RealSequence &resampled, bool drain) {
 
-	int n = resampled.size();
+	RealSequence in(resampled);
+	if (drain) {
+	    RealSequence pad(filterDelay(i), 0.0);
+	    in.insert(in.end(), pad.begin(), pad.end());
+	}
+	
+	int n = in.size();
 	RealSequence filtered(n, 0.0);
-	m_filters[i]->process(resampled.data(), filtered.data(), n);
+	m_filters[i]->process(in.data(), filtered.data(), n);
 
 	int pushStart = 0, pushCount = n;
 
