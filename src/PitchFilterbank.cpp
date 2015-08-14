@@ -37,6 +37,7 @@ public:
 	    vector<double> a(filter_a[ix], filter_a[ix] + coeffs);
 	    vector<double> b(filter_b[ix], filter_b[ix] + coeffs);
 	    m_filters.push_back(new Filter({ a, b }));
+	    m_toCompensate.push_back(totalDelay(i));
 	}
 
 	m_filtered.resize(m_nfilters);
@@ -61,8 +62,6 @@ public:
 
     RealBlock process(const RealSequence &in) {
 
-	cerr << "process" << endl;
-	
 	for (auto r: m_resamplers) {
 	    m_resampled[r.first] = r.second->process(in.data(), in.size());
 	}
@@ -75,6 +74,26 @@ public:
 	    pushFiltered(i, m_resampled[rate]);
 	}
 
+	return energiesFromFiltered(false);
+    }
+
+    RealBlock getRemainingOutput() {
+
+	for (auto r: m_resamplers) {
+	    RealSequence in(r.second->getLatency(), 0.0);
+	    m_resampled[r.first] = r.second->process(in.data(), in.size());
+	}
+
+	for (int i = 0; i < m_nfilters; ++i) {
+	    int rate = filterRate(i);
+	    pushFiltered(i, m_resampled[rate]);
+	}
+	
+	return energiesFromFiltered(true);
+    }
+    
+    RealBlock energiesFromFiltered(bool drain) {
+	
 	//!!! todo make this known through api. these values are at 22050Hz
 	int windowSize = 4410;
 
@@ -89,8 +108,11 @@ public:
 	    //!!! fs=882 (it's 176.4)
 	    int n = windowSize / factor;
 	    int hop = n / 2;
-	    
-	    while (m_filtered[i].size() >= unsigned(n)) {
+
+	    unsigned int minReq = n;
+	    if (drain) minReq = hop;
+
+	    while (m_filtered[i].size() >= minReq) {
 		double energy = calculateEnergy(m_filtered[i], n, factor);
 		m_energies[i].push_back(energy);
 		m_filtered[i] = RealSequence(m_filtered[i].begin() + hop,
@@ -107,7 +129,6 @@ public:
 	}
 	
 	RealBlock out(minCols);
-	cerr << "process: minCols = " << minCols << endl;
 	for (int j = 0; j < minCols; ++j) {
 	    for (int i = 0; i < m_nfilters; ++i) {
 		out[j].push_back(m_energies[i][0]);
@@ -117,21 +138,34 @@ public:
 
 	return out;
     }
-
-    RealBlock getRemainingOutput() {
-	//!!! for now! but we do have some buffered
-	return RealBlock();
-    }
     
     void pushFiltered(int i, const RealSequence &resampled) {
+
 	int n = resampled.size();
 	RealSequence filtered(n, 0.0);
 	m_filters[i]->process(resampled.data(), filtered.data(), n);
-	m_filtered[i].insert(m_filtered[i].end(), filtered.begin(), filtered.end());
+
+	int pushStart = 0, pushCount = n;
+
+	if (m_toCompensate[i] > 0) {
+	    pushCount = max(pushCount - m_toCompensate[i], 0);
+	    int compensating = n - pushCount;
+	    pushStart += compensating;
+	    m_toCompensate[i] -= compensating;
+	    if (m_toCompensate[i] < 0) {
+		throw logic_error("Compensated for more latency than exists");
+	    }
+	}
+	
+	m_filtered[i].insert(m_filtered[i].end(),
+			     filtered.begin() + pushStart,
+			     filtered.begin() + pushStart + pushCount);
     }	
 
     double calculateEnergy(const RealSequence &seq, int n, double factor) {
 	double energy = 0.0;
+	int sz = seq.size();
+	if (n > sz) n = sz;
 	for (int i = 0; i < n; ++i) {
 	    energy += seq[i] * seq[i];
 	}
@@ -151,6 +185,7 @@ private:
 
     map<int, Resampler *> m_resamplers; // rate -> resampler
     map<int, RealSequence> m_resampled;
+    vector<int> m_toCompensate; // latency remaining at start, per filter
     vector<RealSequence> m_filtered;
     vector<deque<double>> m_energies;
     
@@ -171,12 +206,14 @@ private:
 	    return 22050;
 	}
     }
+    int resamplerDelay(int filterIndex) const {
+	return const_cast<D *>(this)->resamplerFor(filterIndex)->getLatency();
+    }
     int filterDelay(int filterIndex) const {
 	return filter_delay[20 + filterIndex];
     }
     int totalDelay(int filterIndex) const {
-	return filterDelay(filterIndex) +
-	    const_cast<D *>(this)->resamplerFor(filterIndex)->getLatency();
+	return resamplerDelay(filterIndex) + filterDelay(filterIndex);
     }
 };
 
