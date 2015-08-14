@@ -19,6 +19,12 @@ public:
     ~Filter();
 
     void reset();
+
+    /**
+     * Filter the input sequence \arg in of length \arg n samples, and
+     * write the resulting \arg n samples into \arg out. There must be
+     * enough room in \arg out for \arg n samples to be written.
+     */
     void process(const double *const BQ_R__ in,
                  double *const BQ_R__ out,
                  const int n);
@@ -30,6 +36,9 @@ private:
     double *m_b;
     double *m_inbuf;
     double *m_outbuf;
+
+    Filter(const Filter &); // not supplied
+    Filter &operator=(const Filter &); // not supplied
 };
     
 #endif

@@ -29,6 +29,9 @@ public:
 private:
     class D;
     D *m_d;
+
+    PitchFilterbank(const PitchFilterbank &); // not supplied
+    PitchFilterbank &operator=(const PitchFilterbank &); // not supplied
 };
 
 #endif
