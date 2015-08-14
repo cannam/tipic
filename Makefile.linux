@@ -1,7 +1,7 @@
 
-#CFLAGS := -Wall -Werror -O3 -ffast-math -msse -msse2 -mfpmath=sse -ftree-vectorize -fPIC -I../vamp-plugin-sdk/ 
+CFLAGS := -Wall -Werror -O3 -ffast-math -msse -msse2 -mfpmath=sse -ftree-vectorize -fPIC -I../vamp-plugin-sdk/ 
 
-CFLAGS := -g -fPIC -I../vamp-plugin-sdk
+#CFLAGS := -g -fPIC -I../vamp-plugin-sdk
 
 CXXFLAGS := $(CFLAGS) -std=c++11
 

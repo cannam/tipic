@@ -151,7 +151,6 @@ Tipic::getOutputDescriptors() const
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
     d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
-    cerr << "output sampleRate = " << d.sampleRate << endl;
     d.hasDuration = false;
     m_pitchOutputNo = list.size();
     list.push_back(d);

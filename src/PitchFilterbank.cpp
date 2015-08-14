@@ -8,7 +8,10 @@
 #include "filter-a.h"
 #include "filter-b.h"
 
+#include <deque>
+#include <map>
 #include <stdexcept>
+#include <iostream>
 
 using namespace std;
 
@@ -21,24 +24,28 @@ class PitchFilterbank::D
 {
 public:
     D(int sampleRate) :
-	m_sampleRate(sampleRate),
-	m_to22050(sampleRate, 22050),
-	m_to4410(sampleRate, 4410),
-	m_to882(sampleRate, 882)
+	m_nfilters(HIGHEST_FILTER_INDEX + 1),
+	m_sampleRate(sampleRate)
     {
-	for (int i = 0; i <= HIGHEST_FILTER_INDEX; ++i) {
+	m_resamplers[882] = new Resampler(sampleRate, 882);
+	m_resamplers[4410] = new Resampler(sampleRate, 4410);
+	m_resamplers[22050] = new Resampler(sampleRate, 22050);
+	
+	for (int i = 0; i < m_nfilters; ++i) {
 	    int ix = i + 20;
 	    int coeffs = sizeof(filter_a[0]) / sizeof(filter_a[0][0]);
 	    vector<double> a(filter_a[ix], filter_a[ix] + coeffs);
 	    vector<double> b(filter_b[ix], filter_b[ix] + coeffs);
 	    m_filters.push_back(new Filter({ a, b }));
 	}
+
+	m_filtered.resize(m_nfilters);
+	m_energies.resize(m_nfilters);
     }
 	
     ~D() {
-	for (int i = 0; i <= HIGHEST_FILTER_INDEX; ++i) {
-	    delete m_filters[i];
-	}
+	for (auto f: m_filters) delete f;
+	for (auto r: m_resamplers) delete r.second;
     }
 
     int getSampleRate() const { return m_sampleRate; }
@@ -54,54 +61,57 @@ public:
 
     RealBlock process(const RealSequence &in) {
 
-	m_at22050 = m_to22050.process(in.data(), in.size());
-	m_at4410  =  m_to4410.process(in.data(), in.size());
-	m_at882   =   m_to882.process(in.data(), in.size());
+	cerr << "process" << endl;
+	
+	for (auto r: m_resamplers) {
+	    m_resampled[r.first] = r.second->process(in.data(), in.size());
+	}
 
-	for (int i = 0; i <= HIGHEST_FILTER_INDEX; ++i) {
-
-	    if (i <= HIGHEST_FILTER_INDEX_AT_882) {
-		pushFiltered(i, m_at882);
-	    } else if (i <= HIGHEST_FILTER_INDEX_AT_4410) {
-		pushFiltered(i, m_at4410);
-	    } else {
-		pushFiltered(i, m_at22050);
+	for (int i = 0; i < m_nfilters; ++i) {
+	    int rate = filterRate(i);
+	    if (m_resampled.find(rate) == m_resampled.end()) {
+		throw logic_error("No resampled output for rate of filter");
 	    }
+	    pushFiltered(i, m_resampled[rate]);
 	}
 
 	//!!! todo make this known through api. these values are at 22050Hz
 	int windowSize = 4410;
 
-	RealBlock energies(HIGHEST_FILTER_INDEX + 1);
-	int cols = 0;
-	
-	while (m_filtered[HIGHEST_FILTER_INDEX].size() >= unsigned(windowSize)) {
-	    //!!! Quite inefficient -- we're counting everything
-	    //!!! twice. Since there is no actual window shape, isn't
-	    //!!! the overlap just averaging?
-	    for (int i = 0; i <= HIGHEST_FILTER_INDEX; ++i) {
-		int n = windowSize;
-		double factor = 1.0;
-		if (i <= HIGHEST_FILTER_INDEX_AT_882) {
-		    factor = 22050.0 / 882.0;
-		} else if (i <= HIGHEST_FILTER_INDEX_AT_4410) {
-		    factor = 22050.0 / 4410.0;
-		}
-		//!!! Problem -- this is not an integer, for
-		//!!! fs=882 (it's 176.4)
-		n = n / factor;
+	//!!! This is all quite inefficient -- we're counting
+	//!!! everything twice. Since there is no actual window shape,
+	//!!! isn't the overlap just averaging?
+
+	for (int i = 0; i < m_nfilters; ++i) {
+
+	    double factor = 22050.0 / filterRate(i);
+	    //!!! Problem -- this is not an integer, for
+	    //!!! fs=882 (it's 176.4)
+	    int n = windowSize / factor;
+	    int hop = n / 2;
+	    
+	    while (m_filtered[i].size() >= unsigned(n)) {
 		double energy = calculateEnergy(m_filtered[i], n, factor);
-		energies[i].push_back(energy);
-		m_filtered[i] =
-		    RealSequence(m_filtered[i].begin() + n/2, m_filtered[i].end());
+		m_energies[i].push_back(energy);
+		m_filtered[i] = RealSequence(m_filtered[i].begin() + hop,
+					     m_filtered[i].end());
 	    }
-	    ++cols;
 	}
 
-	RealBlock out(cols);
-	for (int j = 0; j < cols; ++j) {
-	    for (int i = 0; i <= HIGHEST_FILTER_INDEX; ++i) {
-		out[j].push_back(energies[i][j]);
+	int minCols = 0;
+	for (int i = 0; i < m_nfilters; ++i) {
+	    int n = m_energies[i].size();
+	    if (i == 0 || n < minCols) {
+		minCols = n;
+	    }
+	}
+	
+	RealBlock out(minCols);
+	cerr << "process: minCols = " << minCols << endl;
+	for (int j = 0; j < minCols; ++j) {
+	    for (int i = 0; i < m_nfilters; ++i) {
+		out[j].push_back(m_energies[i][0]);
+		m_energies[i].pop_front();
 	    }
 	}
 
@@ -123,37 +133,14 @@ public:
     double calculateEnergy(const RealSequence &seq, int n, double factor) {
 	double energy = 0.0;
 	for (int i = 0; i < n; ++i) {
-	    energy += seq[i] * seq[i] * factor;
+	    energy += seq[i] * seq[i];
 	}
-	return energy;
+	return energy * factor;
     }
     
 private:
+    int m_nfilters;
     int m_sampleRate;
-    
-    Resampler m_to22050;
-    Resampler m_to4410;
-    Resampler m_to882;
-
-    RealSequence m_at22050;
-    RealSequence m_at4410;
-    RealSequence m_at882;
-
-    RealSequence m_filtered[HIGHEST_FILTER_INDEX + 1];
-    
-    Resampler &resamplerFor(int filterIndex) {
-	if (filterIndex < 0) {
-	    throw std::logic_error("Filter index is negative");
-	} else if (filterIndex <= HIGHEST_FILTER_INDEX_AT_882) {
-	    return m_to882;
-	} else if (filterIndex <= HIGHEST_FILTER_INDEX_AT_4410) {
-	    return m_to4410;
-	} else if (filterIndex <= HIGHEST_FILTER_INDEX_AT_22050) {
-	    return m_to22050;
-	} else {
-	    throw std::logic_error("Filter index out of expected range");
-	}
-    }
 
     // This vector is initialised with 88 filter instances.
     // m_filters[n] (for n from 0 to 87) is for MIDI pitch 21+n, so we
@@ -162,15 +149,34 @@ private:
     // has effective delay filter_delay[20+n].
     vector<Filter *> m_filters;
 
-    int filterIndexForMidiPitch(int pitch) const {
-	return pitch - 21;
+    map<int, Resampler *> m_resamplers; // rate -> resampler
+    map<int, RealSequence> m_resampled;
+    vector<RealSequence> m_filtered;
+    vector<deque<double>> m_energies;
+    
+    Resampler *resamplerFor(int filterIndex) {
+	int rate = filterRate(filterIndex);
+	if (m_resamplers.find(rate) == m_resamplers.end()) {
+	    throw std::logic_error("Filter index has unknown or unexpected rate");
+	}
+	return m_resamplers[rate];
+    }
+
+    int filterRate(int filterIndex) const {
+	if (filterIndex <= HIGHEST_FILTER_INDEX_AT_882) {
+	    return 882;
+	} else if (filterIndex <= HIGHEST_FILTER_INDEX_AT_4410) {
+	    return 4410;
+	} else {
+	    return 22050;
+	}
     }
     int filterDelay(int filterIndex) const {
 	return filter_delay[20 + filterIndex];
     }
     int totalDelay(int filterIndex) const {
 	return filterDelay(filterIndex) +
-	    const_cast<D *>(this)->resamplerFor(filterIndex).getLatency();
+	    const_cast<D *>(this)->resamplerFor(filterIndex)->getLatency();
     }
 };
 
