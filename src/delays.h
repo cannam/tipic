@@ -19,10 +19,10 @@ static const int filter_delay[120] = {
 0,
 0,
 0,
-459,
-434,
-395,
-387,
+908,
+873,
+795,
+764,
 709,
 681,
 654,
@@ -120,4 +120,3 @@ static const int filter_delay[120] = {
 80,
 79
 };
-

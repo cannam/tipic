@@ -8,7 +8,9 @@ delays = zeros(120, 1);
 
 for n = 21:120
     f = filter(h(n).b, h(n).a, dirac);
-    [~,pos] = max(f(1:10000));
-    [~,neg] = max(-f(1:10000));
-    delays(n) = 1 + (pos + neg) / 2;
+    [~,pos] = max(f(2:10000));
+    [~,neg] = max(-f(2:10000));
+    delays(n) = 2 + (pos + neg) / 2;
 end
+
+csvwrite('delays.csv', round(delays));
