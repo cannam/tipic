@@ -47,7 +47,8 @@ public:
 protected:
     int m_stepSize;
     int m_blockSize;
-    PitchFilterbank m_filterbank;
+    float m_tuningFrequency;
+    PitchFilterbank *m_filterbank;
     mutable int m_pitchOutputNo;
 
     void addPitchFeatures(FeatureSet &, const PitchFilterbank::RealBlock &);

@@ -8,7 +8,7 @@
 class PitchFilterbank
 {
 public:
-    PitchFilterbank(int sampleRate);
+    PitchFilterbank(int sampleRate, float tuningFrequency);
     ~PitchFilterbank();
 
     /// A series of real-valued samples ordered in time.

@@ -10,17 +10,21 @@ using namespace std;
 
 using namespace breakfastquay;
 
+static const float defaultTuningFrequency = 440.f;
+
 Tipic::Tipic(float inputSampleRate) :
     Plugin(inputSampleRate),
     m_stepSize(0),
     m_blockSize(0),
-    m_filterbank(inputSampleRate),
+    m_tuningFrequency(defaultTuningFrequency),
+    m_filterbank(0),
     m_pitchOutputNo(-1)
 {
 }
 
 Tipic::~Tipic()
 {
+    delete m_filterbank;
 }
 
 string
@@ -103,18 +107,36 @@ Tipic::ParameterList
 Tipic::getParameterDescriptors() const
 {
     ParameterList list;
+
+    ParameterDescriptor desc;
+    desc.identifier = "tuning";
+    desc.name = "Tuning Frequency";
+    desc.unit = "Hz";
+    desc.description = "Frequency of concert A";
+    desc.minValue = 360;
+    desc.maxValue = 500;
+    desc.defaultValue = defaultTuningFrequency;
+    desc.isQuantized = false;
+    list.push_back(desc);
+    
     return list;
 }
 
 float
 Tipic::getParameter(string identifier) const
 {
+    if (identifier == "tuning") {
+        return m_tuningFrequency;
+    }
     return 0;
 }
 
 void
 Tipic::setParameter(string identifier, float value) 
 {
+    if (identifier == "tuning") {
+        m_tuningFrequency = value;
+    }
 }
 
 Tipic::ProgramList
@@ -189,7 +211,10 @@ Tipic::initialise(size_t channels, size_t stepSize, size_t blockSize)
 void
 Tipic::reset()
 {
-    m_filterbank.reset();
+    if (!m_filterbank) {
+	m_filterbank = new PitchFilterbank(m_inputSampleRate, m_tuningFrequency);
+    }
+    m_filterbank->reset();
 }
 
 Tipic::FeatureSet
@@ -199,7 +224,7 @@ Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
     in.resize(m_blockSize);
     v_convert(in.data(), inputBuffers[0], m_blockSize);
     
-    PitchFilterbank::RealBlock pitchFiltered = m_filterbank.process(in);
+    PitchFilterbank::RealBlock pitchFiltered = m_filterbank->process(in);
 
     FeatureSet fs;
     addPitchFeatures(fs, pitchFiltered);
@@ -209,7 +234,7 @@ Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 Tipic::FeatureSet
 Tipic::getRemainingFeatures()
 {
-    PitchFilterbank::RealBlock pitchFiltered = m_filterbank.getRemainingOutput();
+    PitchFilterbank::RealBlock pitchFiltered = m_filterbank->getRemainingOutput();
 
     FeatureSet fs;
     addPitchFeatures(fs, pitchFiltered);

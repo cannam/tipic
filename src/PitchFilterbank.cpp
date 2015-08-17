@@ -23,10 +23,15 @@ static const int HIGHEST_FILTER_INDEX = HIGHEST_FILTER_INDEX_AT_22050;
 class PitchFilterbank::D
 {
 public:
-    D(int sampleRate) :
+    D(int sampleRate, float tuningFrequency) :
 	m_nfilters(HIGHEST_FILTER_INDEX + 1),
-	m_sampleRate(sampleRate)
+	m_sampleRate(sampleRate),
+	m_tuningFrequency(tuningFrequency)
     {
+	//!!! todo: tuning frequency adjustment
+	// * resample input by a small amount
+	// * adjust output block timings by a small amount
+	
 	m_resamplers[882] = new Resampler(sampleRate, 882);
 	m_resamplers[4410] = new Resampler(sampleRate, 4410);
 	m_resamplers[22050] = new Resampler(sampleRate, 22050);
@@ -50,6 +55,7 @@ public:
     }
 
     int getSampleRate() const { return m_sampleRate; }
+    float getTuningFrequency() const { return m_tuningFrequency; }
     
     /// A series of real-valued samples ordered in time.
     typedef vector<double> RealSequence;
@@ -196,6 +202,7 @@ public:
 private:
     int m_nfilters;
     int m_sampleRate;
+    float m_tuningFrequency;
 
     // This vector is initialised with 88 filter instances.
     // m_filters[n] (for n from 0 to 87) is for MIDI pitch 21+n, so we
@@ -238,8 +245,8 @@ private:
     }
 };
 
-PitchFilterbank::PitchFilterbank(int sampleRate) :
-    m_d(new D(sampleRate))
+PitchFilterbank::PitchFilterbank(int sampleRate, float tuningFrequency) :
+    m_d(new D(sampleRate, tuningFrequency))
 {
 }
 
@@ -252,8 +259,9 @@ void
 PitchFilterbank::reset()
 {
     int rate = m_d->getSampleRate();
+    float freq = m_d->getTuningFrequency();
     delete m_d;
-    m_d = new D(rate);
+    m_d = new D(rate, freq);
 }
 
 PitchFilterbank::RealBlock
