@@ -118,6 +118,12 @@ public:
 	    unsigned int minReq = n;
 	    if (drain) minReq = hop;
 
+	    //!!! strictly, we don't actually need to store the
+	    //!!! filtered outputs since our overlapped windows are
+	    //!!! not shaped -- each one is the sum of two half-size
+	    //!!! windows, so we can just push the energies of those
+	    //!!! directly. that's a TODO
+	    
 	    while (m_filtered[i].size() >= minReq) {
 		double energy = calculateEnergy(m_filtered[i], n, factor);
 		m_energies[i].push_back(energy);
@@ -216,7 +222,7 @@ private:
     vector<int> m_toCompensate; // latency remaining at start, per filter
     vector<RealSequence> m_filtered;
     vector<deque<double>> m_energies;
-    
+
     Resampler *resamplerFor(int filterIndex) {
 	int rate = filterRate(filterIndex);
 	if (m_resamplers.find(rate) == m_resamplers.end()) {
