@@ -31,6 +31,12 @@ int main(int argc, char **argv)
 	    good = false;
 	}
     }
-    if (good) cerr << "SUCCESS" << endl;
+
+    if (good) {
+	cerr << "Success" << endl;
+	return 0;
+    } else {
+	return 1;
+    }
 }
 

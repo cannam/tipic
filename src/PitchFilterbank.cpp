@@ -31,6 +31,13 @@ public:
 	//!!! todo: tuning frequency adjustment
 	// * resample input by a small amount
 	// * adjust output block timings by a small amount
+
+	//!!! nb "we use forward-backward filtering such that the
+	// resulting output signal has precisely zero phase distortion
+	// and a magnitude modified by the square of the filter’s
+	// magnitude response" -- we are not doing forward-backward
+	// here & so need to adapt magnitudes in compensation to match
+	// original
 	
 	m_resamplers[882] = new Resampler(sampleRate, 882);
 	m_resamplers[4410] = new Resampler(sampleRate, 4410);
