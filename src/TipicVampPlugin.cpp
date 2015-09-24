@@ -1,6 +1,9 @@
 
 #include "TipicVampPlugin.h"
 
+#include "PitchFilterbank.h"
+#include "CRP.h"
+
 #include <bqvec/Range.h>
 #include <bqvec/VectorOps.h>
 
@@ -18,7 +21,9 @@ Tipic::Tipic(float inputSampleRate) :
     m_blockSize(0),
     m_tuningFrequency(defaultTuningFrequency),
     m_filterbank(0),
-    m_pitchOutputNo(-1)
+    m_crp(0),
+    m_pitchOutputNo(-1),
+    m_crpOutputNo(-1)
 {
 }
 
@@ -177,21 +182,44 @@ Tipic::getOutputDescriptors() const
     m_pitchOutputNo = list.size();
     list.push_back(d);
 
+    d.identifier = "crp";
+    d.name = "Chroma DCT-Reduced Log Pitch Features";
+    d.description = "";
+    d.unit = "";
+    d.hasFixedBinCount = true;
+    d.binCount = 12; //!!! make parameter in CRP
+    d.hasKnownExtents = false;
+    d.isQuantized = false;
+    d.sampleType = OutputDescriptor::FixedSampleRate;
+    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
+    d.hasDuration = false;
+    m_crpOutputNo = list.size();
+    list.push_back(d);
+
     return list;
 }
 
 bool
 Tipic::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
+    if (m_inputSampleRate > 192000) {
+	cerr << "ERROR: Tipic::initialise: Max sample rate 192000 exceeded "
+	     << "(requested rate = " << m_inputSampleRate << ")" << endl;
+	return false;
+    }
+    
     if (m_pitchOutputNo < 0) {
 	// getOutputDescriptors has never been called, it sets up the
 	// outputNo members
 	(void)getOutputDescriptors();
     }
+    if (m_pitchOutputNo < 0 || m_crpOutputNo < 0) {
+	throw std::logic_error("setup went wrong");
+    }
     
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) {
-	cerr << "ERROR: initialise: wrong number of channels supplied (only 1 supported)" << endl;
+	cerr << "ERROR: Tipic::initialise: wrong number of channels supplied (only 1 supported)" << endl;
 	return false;
     }
 
@@ -213,6 +241,7 @@ Tipic::reset()
 {
     if (!m_filterbank) {
 	m_filterbank = new PitchFilterbank(m_inputSampleRate, m_tuningFrequency);
+	m_crp = new CRP({});
     }
     m_filterbank->reset();
 }
@@ -220,36 +249,39 @@ Tipic::reset()
 Tipic::FeatureSet
 Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 {
-    PitchFilterbank::RealSequence in;
+    RealSequence in;
     in.resize(m_blockSize);
     v_convert(in.data(), inputBuffers[0], m_blockSize);
     
-    PitchFilterbank::RealBlock pitchFiltered = m_filterbank->process(in);
+    RealBlock pitchFiltered = m_filterbank->process(in);
+    RealBlock crpReduced = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
-    addPitchFeatures(fs, pitchFiltered);
+    addFeatures(fs, m_pitchOutputNo, pitchFiltered);
+    addFeatures(fs, m_crpOutputNo, crpReduced);
     return fs;
 }
 
 Tipic::FeatureSet
 Tipic::getRemainingFeatures()
 {
-    PitchFilterbank::RealBlock pitchFiltered = m_filterbank->getRemainingOutput();
+    RealBlock pitchFiltered = m_filterbank->getRemainingOutput();
+    RealBlock crpReduced = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
-    addPitchFeatures(fs, pitchFiltered);
+    addFeatures(fs, m_pitchOutputNo, pitchFiltered);
+    addFeatures(fs, m_crpOutputNo, crpReduced);
     return fs;
 }
 
 void
-Tipic::addPitchFeatures(FeatureSet &fs, const PitchFilterbank::RealBlock &block)
+Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block)
 {
     for (int i = 0; in_range_for(block, i); ++i) {
 	Feature f;
 	int h = block[i].size();
 	f.values.resize(h);
 	v_convert(f.values.data(), block[i].data(), h);
-	fs[m_pitchOutputNo].push_back(f);
+	fs[outputNo].push_back(f);
     }
 }
-

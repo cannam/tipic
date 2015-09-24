@@ -63,15 +63,6 @@ public:
 
     int getSampleRate() const { return m_sampleRate; }
     float getTuningFrequency() const { return m_tuningFrequency; }
-    
-    /// A series of real-valued samples ordered in time.
-    typedef vector<double> RealSequence;
-
-    /// A series of real-valued samples ordered by bin (frequency or similar).
-    typedef vector<double> RealColumn;
-
-    /// A matrix of real-valued samples, indexed by time then bin number.
-    typedef vector<RealColumn> RealBlock;
 
     RealBlock process(const RealSequence &in) {
 
@@ -277,13 +268,13 @@ PitchFilterbank::reset()
     m_d = new D(rate, freq);
 }
 
-PitchFilterbank::RealBlock
+RealBlock
 PitchFilterbank::process(const RealSequence &in)
 {
     return m_d->process(in);
 }
 
-PitchFilterbank::RealBlock
+RealBlock
 PitchFilterbank::getRemainingOutput()
 {
     return m_d->getRemainingOutput();

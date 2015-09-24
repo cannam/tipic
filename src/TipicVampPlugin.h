@@ -3,7 +3,10 @@
 
 #include <vamp-sdk/Plugin.h>
 
-#include "PitchFilterbank.h"
+#include "Types.h"
+
+class PitchFilterbank;
+class CRP;
 
 using std::string;
 
@@ -49,9 +52,11 @@ protected:
     int m_blockSize;
     float m_tuningFrequency;
     PitchFilterbank *m_filterbank;
+    CRP *m_crp;
     mutable int m_pitchOutputNo;
+    mutable int m_crpOutputNo;
 
-    void addPitchFeatures(FeatureSet &, const PitchFilterbank::RealBlock &);
+    void addFeatures(FeatureSet &, int outputNo, const RealBlock &);
 };
 
 

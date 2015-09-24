@@ -24,8 +24,8 @@ PLUGIN	       := tipic-vamp$(PLUGIN_EXT)
 
 PUBLIC_HEADERS	:=
 
-LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h
-LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp $(SRC_DIR)/DCT.cpp
+LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h $(SRC_DIR)/Types.h $(SRC_DIR)/CRP.h
+LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp $(SRC_DIR)/DCT.cpp $(SRC_DIR)/CRP.cpp
 LIB_OBJECTS	:= $(LIB_SOURCES:.cpp=.o)
 LIB_OBJECTS	:= $(LIB_OBJECTS:.c=.o)
 
