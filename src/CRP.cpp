@@ -3,6 +3,7 @@
 #include "CRP.h"
 
 #include "DCT.h"
+#include "Normalise.h"
 
 #include <cmath>
 #include <iostream>
@@ -28,6 +29,8 @@ CRP::process(const RealBlock &in)
     int bins = 12;
     RealBlock out;
     RealColumn dctOut(m_size);
+
+    int normP = 2; //!!! L2 norm (this is a param in MATLAB version)
 
     for (RealColumn col: in) {
 
@@ -59,9 +62,7 @@ CRP::process(const RealBlock &in)
 	    crp[i % bins] += col[i];
 	}
 
-	//!!! normalise as in normalizeFeature.m
-	
-	out.push_back(crp);
+	out.push_back(Normalise::normalise(crp, normP));
     }
 
     return out;
