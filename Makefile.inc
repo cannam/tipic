@@ -24,8 +24,8 @@ PLUGIN	       := tipic-vamp$(PLUGIN_EXT)
 
 PUBLIC_HEADERS	:=
 
-LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h $(SRC_DIR)/Types.h $(SRC_DIR)/CRP.h
-LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp $(SRC_DIR)/DCT.cpp $(SRC_DIR)/CRP.cpp
+LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h $(SRC_DIR)/Types.h $(SRC_DIR)/CRP.h $(SRC_DIR)/Normalise.h
+LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp $(SRC_DIR)/DCT.cpp $(SRC_DIR)/CRP.cpp $(SRC_DIR)/Normalise.cpp
 LIB_OBJECTS	:= $(LIB_SOURCES:.cpp=.o)
 LIB_OBJECTS	:= $(LIB_OBJECTS:.c=.o)
 
@@ -39,7 +39,7 @@ BQVEC_SOURCES	:= $(BQVEC_DIR)/src/Allocators.cpp
 BQVEC_OBJECTS	:= $(BQVEC_SOURCES:.cpp=.o)
 BQVEC_OBJECTS	:= $(BQVEC_OBJECTS:.c=.o)
 
-TEST_SOURCES	:= $(SRC_DIR)/test-filter.cpp $(SRC_DIR)/test-dct.cpp
+TEST_SOURCES	:= $(SRC_DIR)/test-filter.cpp $(SRC_DIR)/test-dct.cpp $(SRC_DIR)/test-normalise.cpp
 TEST_OBJECTS	:= $(TEST_SOURCES:.cpp=.o)
 TEST_OBJECTS	:= $(TEST_OBJECTS:.c=.o)
 
@@ -67,15 +67,19 @@ $(LIBRARY):    $(LIB_OBJECTS) $(BQVEC_OBJECTS) $(OTHER_OBJECTS)
 	$(RANLIB) $@
 
 .PHONY:	tests
-tests:	test-dct test-filter
+tests:	test-dct test-filter test-normalise
 	./test-dct
 	./test-filter
+	./test-normalise
 
 test-dct:	  $(TEST_OBJECTS) $(LIBRARY)
 	$(CXX) -o $@ src/test-dct.o $(LIBRARY)
 
 test-filter:	  $(TEST_OBJECTS) $(LIBRARY)
 	$(CXX) -o $@ src/test-filter.o $(LIBRARY)
+
+test-normalise:	  $(TEST_OBJECTS) $(LIBRARY)
+	$(CXX) -o $@ src/test-normalise.o $(LIBRARY)
 
 clean:		
 	rm -f $(OBJECTS)
