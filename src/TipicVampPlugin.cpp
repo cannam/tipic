@@ -3,6 +3,7 @@
 
 #include "PitchFilterbank.h"
 #include "CRP.h"
+#include "Chroma.h"
 
 #include <bqvec/Range.h>
 #include <bqvec/VectorOps.h>
@@ -22,7 +23,11 @@ Tipic::Tipic(float inputSampleRate) :
     m_tuningFrequency(defaultTuningFrequency),
     m_filterbank(0),
     m_crp(0),
+    m_chroma(0),
+    m_logChroma(0),
     m_pitchOutputNo(-1),
+    m_cpOutputNo(-1),
+    m_clpOutputNo(-1),
     m_crpOutputNo(-1)
 {
 }
@@ -30,6 +35,9 @@ Tipic::Tipic(float inputSampleRate) :
 Tipic::~Tipic()
 {
     delete m_filterbank;
+    delete m_crp;
+    delete m_chroma;
+    delete m_logChroma;
 }
 
 string
@@ -182,12 +190,40 @@ Tipic::getOutputDescriptors() const
     m_pitchOutputNo = list.size();
     list.push_back(d);
 
+    d.identifier = "cp";
+    d.name = "Chroma Pitch Features";
+    d.description = "";
+    d.unit = "";
+    d.hasFixedBinCount = true;
+    d.binCount = 12;
+    d.hasKnownExtents = false;
+    d.isQuantized = false;
+    d.sampleType = OutputDescriptor::FixedSampleRate;
+    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
+    d.hasDuration = false;
+    m_cpOutputNo = list.size();
+    list.push_back(d);
+
+    d.identifier = "clp";
+    d.name = "Chroma Log Pitch Features";
+    d.description = "";
+    d.unit = "";
+    d.hasFixedBinCount = true;
+    d.binCount = 12;
+    d.hasKnownExtents = false;
+    d.isQuantized = false;
+    d.sampleType = OutputDescriptor::FixedSampleRate;
+    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
+    d.hasDuration = false;
+    m_clpOutputNo = list.size();
+    list.push_back(d);
+
     d.identifier = "crp";
     d.name = "Chroma DCT-Reduced Log Pitch Features";
     d.description = "";
     d.unit = "";
     d.hasFixedBinCount = true;
-    d.binCount = 12; //!!! make parameter in CRP
+    d.binCount = 12;
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
@@ -213,7 +249,10 @@ Tipic::initialise(size_t channels, size_t stepSize, size_t blockSize)
 	// outputNo members
 	(void)getOutputDescriptors();
     }
-    if (m_pitchOutputNo < 0 || m_crpOutputNo < 0) {
+    if (m_pitchOutputNo < 0 ||
+	m_cpOutputNo < 0 ||
+	m_clpOutputNo < 0 ||
+	m_crpOutputNo < 0) {
 	throw std::logic_error("setup went wrong");
     }
     
@@ -240,9 +279,18 @@ void
 Tipic::reset()
 {
     if (!m_filterbank) {
+
 	m_filterbank = new PitchFilterbank(m_inputSampleRate, m_tuningFrequency);
+
 	m_crp = new CRP({});
+
+	m_chroma = new Chroma({});
+
+	Chroma::Parameters params;
+	params.applyLogCompression = true;
+	m_logChroma = new Chroma(params);
     }
+    
     m_filterbank->reset();
 }
 
@@ -254,11 +302,16 @@ Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
     v_convert(in.data(), inputBuffers[0], m_blockSize);
     
     RealBlock pitchFiltered = m_filterbank->process(in);
-    RealBlock crpReduced = m_crp->process(pitchFiltered);
+
+    RealBlock cp = m_chroma->process(pitchFiltered);
+    RealBlock clp = m_logChroma->process(pitchFiltered);
+    RealBlock crp = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
     addFeatures(fs, m_pitchOutputNo, pitchFiltered);
-    addFeatures(fs, m_crpOutputNo, crpReduced);
+    addFeatures(fs, m_cpOutputNo, cp);
+    addFeatures(fs, m_clpOutputNo, clp);
+    addFeatures(fs, m_crpOutputNo, crp);
     return fs;
 }
 
@@ -266,11 +319,16 @@ Tipic::FeatureSet
 Tipic::getRemainingFeatures()
 {
     RealBlock pitchFiltered = m_filterbank->getRemainingOutput();
-    RealBlock crpReduced = m_crp->process(pitchFiltered);
+
+    RealBlock cp = m_chroma->process(pitchFiltered);
+    RealBlock clp = m_logChroma->process(pitchFiltered);
+    RealBlock crp = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
     addFeatures(fs, m_pitchOutputNo, pitchFiltered);
-    addFeatures(fs, m_crpOutputNo, crpReduced);
+    addFeatures(fs, m_cpOutputNo, cp);
+    addFeatures(fs, m_clpOutputNo, clp);
+    addFeatures(fs, m_crpOutputNo, crp);
     return fs;
 }
 

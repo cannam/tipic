@@ -17,6 +17,7 @@ Normalise::norm(vector<double> v, int p)
 vector<double>
 Normalise::normalise(vector<double> v, int p, double threshold)
 {
+    if (p == 0) return v; // no normalisation
     int n = v.size();
     double nv = norm(v, p);
     if (nv < threshold) {

@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
-#include "CRP.h"
+#include "Chroma.h"
 
 #include "Normalise.h"
 #include "LogCompress.h"
@@ -12,16 +12,12 @@
 
 using namespace std;
 
-CRP::CRP(Parameters params) :
-    m_params(params),
-    m_dctReduce(120, params.coefficientsToDrop)
-{}
-
-CRP::~CRP()
-{}
+Chroma::~Chroma()
+{
+}
 
 RealBlock
-CRP::process(const RealBlock &in)
+Chroma::process(const RealBlock &in)
 {
     if (in.empty()) {
 	return in;
@@ -37,9 +33,8 @@ CRP::process(const RealBlock &in)
 
         out.push_back(Normalise::normalise
                       (OctaveFold::process
-                       (m_dctReduce.process
-                        (Resize::process(col))),
-                       m_params.normP, m_params.normThresh));
+		       (Resize::process(col)),
+		       m_params.normP, m_params.normThresh));
     }        
 
     return out;

@@ -7,6 +7,7 @@
 
 class PitchFilterbank;
 class CRP;
+class Chroma;
 
 using std::string;
 
@@ -53,7 +54,11 @@ protected:
     float m_tuningFrequency;
     PitchFilterbank *m_filterbank;
     CRP *m_crp;
+    Chroma *m_chroma;
+    Chroma *m_logChroma;
     mutable int m_pitchOutputNo;
+    mutable int m_cpOutputNo;
+    mutable int m_clpOutputNo;
     mutable int m_crpOutputNo;
 
     void addFeatures(FeatureSet &, int outputNo, const RealBlock &);
