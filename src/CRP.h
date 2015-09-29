@@ -5,7 +5,7 @@
 
 #include "Types.h"
 
-class DCT;
+class DCTReduce;
 
 //!!! Downsampling/temporal smoothing not yet implemented
 
@@ -15,10 +15,19 @@ public:
     struct Parameters {
 	int coefficientsToDrop;
 	bool applyLogCompression;
-	Parameters() : coefficientsToDrop(54), applyLogCompression(true) { }
+        double logFactor;
+        double logAddTerm;
+        int normP;
+	Parameters() :
+            coefficientsToDrop(54),
+            applyLogCompression(true),
+            logFactor(1000.0),
+            logAddTerm(1.0),
+            normP(2)
+        { }
     };
 	
-    CRP(Parameters params) : m_params(params), m_size(0), m_dct(0) { }
+    CRP(Parameters params) : m_params(params), m_size(0), m_dctReduce(0) { }
     ~CRP();
 
     RealBlock process(const RealBlock &in);
@@ -26,7 +35,7 @@ public:
 private:
     Parameters m_params;
     int m_size;
-    DCT *m_dct;
+    DCTReduce *m_dctReduce;
 };
 
 #endif

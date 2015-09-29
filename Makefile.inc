@@ -24,7 +24,7 @@ PLUGIN	       := tipic-vamp$(PLUGIN_EXT)
 
 PUBLIC_HEADERS	:=
 
-LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h $(SRC_DIR)/Types.h $(SRC_DIR)/CRP.h $(SRC_DIR)/Normalise.h
+LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h $(SRC_DIR)/Types.h $(SRC_DIR)/CRP.h $(SRC_DIR)/Normalise.h $(SRC_DIR)/LogCompress.h $(SRC_DIR)/OctaveFold.h
 LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp $(SRC_DIR)/DCT.cpp $(SRC_DIR)/CRP.cpp $(SRC_DIR)/Normalise.cpp
 LIB_OBJECTS	:= $(LIB_SOURCES:.cpp=.o)
 LIB_OBJECTS	:= $(LIB_OBJECTS:.c=.o)
@@ -96,12 +96,21 @@ depend:
 src/Filter.o: src/Filter.h bqvec/bqvec/Restrict.h bqvec/bqvec/VectorOps.h
 src/Filter.o: bqvec/bqvec/Restrict.h bqvec/bqvec/Allocators.h
 src/Filter.o: bqvec/bqvec/VectorOps.h
-src/PitchFilterbank.o: src/PitchFilterbank.h src/Filter.h
+src/PitchFilterbank.o: src/PitchFilterbank.h src/Types.h src/Filter.h
 src/PitchFilterbank.o: bqvec/bqvec/Restrict.h src/delays.h src/filter-a.h
 src/PitchFilterbank.o: src/filter-b.h
-src/TipicVampPlugin.o: src/TipicVampPlugin.h src/PitchFilterbank.h
-src/TipicVampPlugin.o: bqvec/bqvec/Range.h bqvec/bqvec/VectorOps.h
-src/TipicVampPlugin.o: bqvec/bqvec/Restrict.h
-src/libmain.o: src/TipicVampPlugin.h src/PitchFilterbank.h
+src/DCT.o: src/DCT.h
+src/CRP.o: src/CRP.h src/Types.h src/DCT.h src/Normalise.h src/LogCompress.h
+src/CRP.o: src/OctaveFold.h src/DCTReduce.h
+src/Normalise.o: src/Normalise.h
+src/TipicVampPlugin.o: src/TipicVampPlugin.h src/Types.h
+src/TipicVampPlugin.o: src/PitchFilterbank.h src/CRP.h bqvec/bqvec/Range.h
+src/TipicVampPlugin.o: bqvec/bqvec/VectorOps.h bqvec/bqvec/Restrict.h
+src/libmain.o: src/TipicVampPlugin.h src/Types.h
+src/test-filter.o: src/Filter.h bqvec/bqvec/Restrict.h
+src/test-dct.o: src/DCT.h
+src/test-normalise.o: src/Normalise.h
 src/Filter.o: bqvec/bqvec/Restrict.h
-src/TipicVampPlugin.o: src/PitchFilterbank.h
+src/PitchFilterbank.o: src/Types.h
+src/CRP.o: src/Types.h
+src/TipicVampPlugin.o: src/Types.h
