@@ -18,23 +18,24 @@ public:
         double logFactor;
         double logAddTerm;
         int normP;
+        double normThresh;
 	Parameters() :
-            coefficientsToDrop(54),
+            coefficientsToDrop(55),
             applyLogCompression(true),
             logFactor(1000.0),
             logAddTerm(1.0),
-            normP(2)
+            normP(2),
+            normThresh(1e-6)
         { }
     };
 	
-    CRP(Parameters params) : m_params(params), m_size(0), m_dctReduce(0) { }
+    CRP(Parameters params) : m_params(params), m_dctReduce(0) { }
     ~CRP();
 
     RealBlock process(const RealBlock &in);
     
 private:
     Parameters m_params;
-    int m_size;
     DCTReduce *m_dctReduce;
 };
 

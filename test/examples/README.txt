@@ -39,5 +39,7 @@ The files here are:
 The proposition that these are intended to help test is: If Tipic
 produces the pitch features found in ylsf-30sec-tipic-pitch.csv, and
 if we assume the MATLAB implementations are correct, then Tipic should
-also produce chroma features matching those in these files.
+also produce chroma features matching those in these files. (Up to
+rounding error based on the limited precision with which the original
+pitch values were written out to CSV.)
 

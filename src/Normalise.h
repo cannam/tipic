@@ -9,10 +9,10 @@ class Normalise
 {
 public:
     static double norm(std::vector<double> v,
-		       int p = 2); // L^p norm
+		       int p); // L^p norm
 
     static std::vector<double> normalise(std::vector<double> v,
-					 int p = 2,
+					 int p,
 					 double threshold = 1e-6);
 };
 

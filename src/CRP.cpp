@@ -24,9 +24,14 @@ CRP::process(const RealBlock &in)
     if (in.empty()) {
 	return in;
     }
+
+    // The chroma processing chain requires a 120-bin pitch filterbank
+    // output, even though ours only actually contains 88 bins.
+
+    int size = 120;
+    
     if (!m_dctReduce) {
-	m_size = in[0].size();
-	m_dctReduce = new DCTReduce(m_size, m_params.coefficientsToDrop);
+	m_dctReduce = new DCTReduce(size, m_params.coefficientsToDrop);
     }
 
     RealBlock out;
@@ -37,10 +42,14 @@ CRP::process(const RealBlock &in)
             col = LogCompress::process(col, m_params.logFactor, m_params.logAddTerm);
 	}
 
+        RealColumn resized(20, 0.0);
+        resized.insert(resized.end(), col.begin(), col.end());
+        resized.resize(size);
+        
         out.push_back(Normalise::normalise
                       (OctaveFold::process
-                       (m_dctReduce->process(col)),
-                       m_params.normP));
+                       (m_dctReduce->process(resized)),
+                       m_params.normP, m_params.normThresh));
     }        
 
     return out;
