@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <iostream>
 
+#include <cmath>
+
 using namespace std;
 
 static const int HIGHEST_FILTER_INDEX_AT_882 = 38;   // MIDI pitch 59
@@ -23,11 +25,23 @@ static const int HIGHEST_FILTER_INDEX = HIGHEST_FILTER_INDEX_AT_22050;
 class PitchFilterbank::D
 {
 public:
-    D(int sampleRate, float tuningFrequency) :
+    D(int sampleRate, double tuningFrequency) :
 	m_nfilters(HIGHEST_FILTER_INDEX + 1),
 	m_sampleRate(sampleRate),
 	m_tuningFrequency(tuningFrequency)
     {
+	// To handle a non-440 tuning frequency, we resample the input
+	// by this tuning ratio and then adjust the output block
+	// timings accordingly. Ratio is calculated on the basis that
+	// for tuning freq >440 we want to lower the pitch of the
+	// input audio by slowing it down, therefore we want to
+	// pretend that it came in at a lower sample rate than it
+	// really did, and for >440 the opposite applies. The
+	// effective input sample rate is the rate at which we pretend
+	// the audio was supplied.
+	m_tuningRatio = 440.0 / m_tuningFrequency;
+	m_effectiveInputSampleRate = int(round(m_sampleRate * m_tuningRatio));
+
 	//!!! todo: tuning frequency adjustment
 	// * resample input by a small amount
 	// * adjust output block timings by a small amount
@@ -39,9 +53,9 @@ public:
 	// here & so need to adapt magnitudes in compensation to match
 	// original
 	
-	m_resamplers[882] = new Resampler(sampleRate, 882);
-	m_resamplers[4410] = new Resampler(sampleRate, 4410);
-	m_resamplers[22050] = new Resampler(sampleRate, 22050);
+	m_resamplers[882] = new Resampler(m_effectiveInputSampleRate, 882);
+	m_resamplers[4410] = new Resampler(m_effectiveInputSampleRate, 4410);
+	m_resamplers[22050] = new Resampler(m_effectiveInputSampleRate, 22050);
 	
 	for (int i = 0; i < m_nfilters; ++i) {
 	    int ix = i + 20;
@@ -62,7 +76,7 @@ public:
     }
 
     int getSampleRate() const { return m_sampleRate; }
-    float getTuningFrequency() const { return m_tuningFrequency; }
+    double getTuningFrequency() const { return m_tuningFrequency; }
 
     RealBlock process(const RealSequence &in) {
 
@@ -206,7 +220,9 @@ public:
 private:
     int m_nfilters;
     int m_sampleRate;
-    float m_tuningFrequency;
+    int m_effectiveInputSampleRate;
+    double m_tuningFrequency;
+    double m_tuningRatio;
 
     // This vector is initialised with 88 filter instances.
     // m_filters[n] (for n from 0 to 87) is for MIDI pitch 21+n, so we
@@ -249,7 +265,7 @@ private:
     }
 };
 
-PitchFilterbank::PitchFilterbank(int sampleRate, float tuningFrequency) :
+PitchFilterbank::PitchFilterbank(int sampleRate, double tuningFrequency) :
     m_d(new D(sampleRate, tuningFrequency))
 {
 }
@@ -263,7 +279,7 @@ void
 PitchFilterbank::reset()
 {
     int rate = m_d->getSampleRate();
-    float freq = m_d->getTuningFrequency();
+    double freq = m_d->getTuningFrequency();
     delete m_d;
     m_d = new D(rate, freq);
 }
@@ -279,4 +295,12 @@ PitchFilterbank::getRemainingOutput()
 {
     return m_d->getRemainingOutput();
 }
+
+void
+PitchFilterbank::getPitchRange(int &minMidiPitch, int &maxMidiPitch)
+{
+    minMidiPitch = 21;
+    maxMidiPitch = 108;
+}
+
 

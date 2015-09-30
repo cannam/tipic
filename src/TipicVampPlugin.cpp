@@ -9,6 +9,7 @@
 #include <bqvec/VectorOps.h>
 
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -170,6 +171,18 @@ Tipic::selectProgram(string name)
 {
 }
 
+static vector<string> noteNames
+    { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
+static std::string noteName(int i)
+{
+    string name = noteNames[i % 12];
+    int oct = i / 12 - 1;
+    ostringstream sstr;
+    sstr << i << " " << name << oct << ends;
+    return sstr.str();
+}
+
 Tipic::OutputList
 Tipic::getOutputDescriptors() const
 {
@@ -181,7 +194,13 @@ Tipic::getOutputDescriptors() const
     d.description = "";
     d.unit = "";
     d.hasFixedBinCount = true;
-    d.binCount = 88;
+    int min = 0, max = 0;
+    PitchFilterbank::getPitchRange(min, max);
+    d.binCount = max - min + 1;
+    d.binNames.clear();
+    for (int p = min; p <= max; ++p) {
+	d.binNames.push_back(noteName(p));
+    }
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
@@ -196,6 +215,7 @@ Tipic::getOutputDescriptors() const
     d.unit = "";
     d.hasFixedBinCount = true;
     d.binCount = 12;
+    d.binNames = noteNames;
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
@@ -207,28 +227,12 @@ Tipic::getOutputDescriptors() const
     d.identifier = "clp";
     d.name = "Chroma Log Pitch Features";
     d.description = "";
-    d.unit = "";
-    d.hasFixedBinCount = true;
-    d.binCount = 12;
-    d.hasKnownExtents = false;
-    d.isQuantized = false;
-    d.sampleType = OutputDescriptor::FixedSampleRate;
-    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
-    d.hasDuration = false;
     m_clpOutputNo = list.size();
     list.push_back(d);
 
     d.identifier = "crp";
     d.name = "Chroma DCT-Reduced Log Pitch Features";
     d.description = "";
-    d.unit = "";
-    d.hasFixedBinCount = true;
-    d.binCount = 12;
-    d.hasKnownExtents = false;
-    d.isQuantized = false;
-    d.sampleType = OutputDescriptor::FixedSampleRate;
-    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
-    d.hasDuration = false;
     m_crpOutputNo = list.size();
     list.push_back(d);
 

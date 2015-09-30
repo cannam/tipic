@@ -8,7 +8,7 @@
 class PitchFilterbank
 {
 public:
-    PitchFilterbank(int sampleRate, float tuningFrequency);
+    PitchFilterbank(int sampleRate, double tuningFrequency);
     ~PitchFilterbank();
 
     void reset();
@@ -17,6 +17,8 @@ public:
 
     RealBlock getRemainingOutput();
 
+    static void getPitchRange(int &minMidiPitch, int &maxMidiPitch);
+    
 private:
     class D;
     D *m_d;
