@@ -148,6 +148,11 @@ public:
 	    unsigned int minReq = n;
 	    if (drain) minReq = hop;
 
+	    // we use a separate buffer for each filter (not just one
+	    // per resampling ratio) because each filter has a
+	    // different delay, which we are compensating for when
+	    // first filling the buffer.
+	    
 	    while (m_filtered[i].size() >= minReq) {
 		double energy = calculateEnergy(m_filtered[i], n, here.factor);
 		m_energies[i].push_back(energy);
