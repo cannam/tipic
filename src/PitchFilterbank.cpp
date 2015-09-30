@@ -28,19 +28,23 @@ public:
     D(int sampleRate, double tuningFrequency) :
 	m_nfilters(HIGHEST_FILTER_INDEX + 1),
 	m_sampleRate(sampleRate),
-	m_tuningFrequency(tuningFrequency)
+	m_tuningFrequency(tuningFrequency),
+	m_blockNo(0)
     {
-	// To handle a non-440 tuning frequency, we resample the input
-	// by this tuning ratio and then adjust the output block
-	// timings accordingly. Ratio is calculated on the basis that
-	// for tuning freq >440 we want to lower the pitch of the
-	// input audio by slowing it down, therefore we want to
-	// pretend that it came in at a lower sample rate than it
-	// really did, and for >440 the opposite applies. The
-	// effective input sample rate is the rate at which we pretend
-	// the audio was supplied.
-	m_tuningRatio = 440.0 / m_tuningFrequency;
-	m_effectiveInputSampleRate = int(round(m_sampleRate * m_tuningRatio));
+	// To handle a non-440Hz tuning frequency, we resample the
+	// input and then adjust the output block timings
+	// accordingly. For a tuning freq >440 we want to lower the
+	// pitch of the input audio by slowing it down, therefore we
+	// want to pretend that it came in at a lower sample rate than
+	// it really did; for >440 the opposite applies. The effective
+	// input sample rate is the rate at which we pretend the audio
+	// was supplied. Rounding to the nearest int (because our
+	// resampler only supports integer rates) gives around 0.1Hz
+	// quantization close to 440Hz in 44.1kHz audio -- we could do
+	// better by using multiples of our source and target sample
+	// rates, but I think it probably isn't necessary.
+	m_effectiveInputSampleRate =
+	    int(round(m_sampleRate * (440.0 / m_tuningFrequency)));
 
 	//!!! todo: tuning frequency adjustment
 	// * resample input by a small amount
@@ -109,11 +113,34 @@ public:
 	
 	return energiesFromFiltered(true);
     }
+
+    struct WindowPosition {
+	uint64_t start;
+	int size;
+	double factor;
+    };
+    
+    WindowPosition windowPosition(int block, int i) {
+
+	//!!! todo make this known through api. these values are at 22050Hz
+	uint64_t hop = 2205;
+
+	double rate = filterRate(i);
+	double topRate = 22050.0;
+	double rateRatio = topRate / rate;
+	double tuningRatio = m_sampleRate / double(m_effectiveInputSampleRate);
+	double sizeRatio = tuningRatio / rateRatio;
+
+	uint64_t start(round((hop * block) * sizeRatio));
+	int size(round((hop * 2) * sizeRatio));
+
+//	cerr << "block " << block << ", i " << i << ": start " << start << ", size "
+//	     << size << endl;
+	
+	return { start, size, rateRatio };
+    }
     
     RealBlock energiesFromFiltered(bool drain) {
-	
-	//!!! todo make this known through api. these values are at 22050Hz
-	int windowSize = 4410;
 
 	//!!! This is all quite inefficient -- we're counting
 	//!!! everything twice. Since there is no actual window shape,
@@ -121,11 +148,11 @@ public:
 
 	for (int i = 0; i < m_nfilters; ++i) {
 
-	    double factor = 22050.0 / filterRate(i);
-	    //!!! Problem -- this is not an integer, for
-	    //!!! fs=882 (it's 176.4)
-	    int n = windowSize / factor;
-	    int hop = n / 2;
+	    WindowPosition here = windowPosition(m_blockNo, i);
+	    WindowPosition next = windowPosition(m_blockNo + 1, i);
+
+	    int n = here.size;
+	    int hop = next.start - here.start;
 
 	    unsigned int minReq = n;
 	    if (drain) minReq = hop;
@@ -137,13 +164,15 @@ public:
 	    //!!! directly. that's a TODO
 	    
 	    while (m_filtered[i].size() >= minReq) {
-		double energy = calculateEnergy(m_filtered[i], n, factor);
+		double energy = calculateEnergy(m_filtered[i], n, here.factor);
 		m_energies[i].push_back(energy);
 		m_filtered[i] = RealSequence(m_filtered[i].begin() + hop,
 					     m_filtered[i].end());
 	    }
 	}
 
+	++m_blockNo;
+	
 	int minCols = 0, maxCols = 0;
 	for (int i = 0; i < m_nfilters; ++i) {
 	    int n = m_energies[i].size();
@@ -222,7 +251,6 @@ private:
     int m_sampleRate;
     int m_effectiveInputSampleRate;
     double m_tuningFrequency;
-    double m_tuningRatio;
 
     // This vector is initialised with 88 filter instances.
     // m_filters[n] (for n from 0 to 87) is for MIDI pitch 21+n, so we
@@ -236,6 +264,7 @@ private:
     vector<int> m_toCompensate; // latency remaining at start, per filter
     vector<RealSequence> m_filtered;
     vector<deque<double>> m_energies;
+    int m_blockNo;
 
     Resampler *resamplerFor(int filterIndex) {
 	int rate = filterRate(filterIndex);
