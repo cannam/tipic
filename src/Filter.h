@@ -15,7 +15,14 @@ public:
         std::vector<double> b;
     };
 
+    /**
+     * Construct an IIR filter with numerators b and denominators
+     * a. To make an FIR filter instead (i.e. with denominator = 1),
+     * leave the vector a in the param struct empty. Otherwise, the
+     * vectors a and b must have the same number of values.
+     */
     Filter(Parameters params);
+    
     ~Filter();
 
     void reset();
@@ -39,6 +46,7 @@ private:
     int m_offa;
     int m_offb;
     int m_offmax;
+    bool m_fir;
 
     Filter(const Filter &); // not supplied
     Filter &operator=(const Filter &); // not supplied
