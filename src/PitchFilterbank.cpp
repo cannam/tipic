@@ -120,8 +120,7 @@ public:
     
     WindowPosition windowPosition(int block, int i) {
 
-	//!!! todo make this known through api. these values are at 22050Hz
-	uint64_t hop = 2205;
+	int hop = 2205;
 
 	double rate = filterRate(i);
 	double topRate = 22050.0;
@@ -129,7 +128,7 @@ public:
 	double tuningRatio = m_sampleRate / double(m_effectiveInputRate);
 	double sizeRatio = tuningRatio / rateRatio;
 
-	uint64_t start(round((hop * block) * sizeRatio));
+	uint64_t start(round((hop * uint64_t(block)) * sizeRatio));
 	int size(round((hop * 2) * sizeRatio));
 
 	return { start, size, rateRatio };
@@ -322,4 +321,9 @@ PitchFilterbank::getPitchRange(int &minMidiPitch, int &maxMidiPitch)
     maxMidiPitch = 108;
 }
 
+double
+PitchFilterbank::getOutputSampleRate()
+{
+    return 22050.0 / 2205.0;
+}
 

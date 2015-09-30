@@ -204,7 +204,7 @@ Tipic::getOutputDescriptors() const
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
-    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
+    d.sampleRate = PitchFilterbank::getOutputSampleRate();
     d.hasDuration = false;
     m_pitchOutputNo = list.size();
     list.push_back(d);
@@ -219,7 +219,7 @@ Tipic::getOutputDescriptors() const
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
-    d.sampleRate = 22050 / 2205; //!!! get block size & hop from filterbank
+    d.sampleRate = PitchFilterbank::getOutputSampleRate();
     d.hasDuration = false;
     m_cpOutputNo = list.size();
     list.push_back(d);

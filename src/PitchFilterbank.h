@@ -18,6 +18,8 @@ public:
     RealBlock getRemainingOutput();
 
     static void getPitchRange(int &minMidiPitch, int &maxMidiPitch);
+
+    static double getOutputSampleRate();
     
 private:
     class D;
