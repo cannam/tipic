@@ -8,6 +8,7 @@
 class PitchFilterbank;
 class CRP;
 class Chroma;
+class FeatureDownsample;
 
 using std::string;
 
@@ -60,6 +61,7 @@ protected:
     mutable int m_cpOutputNo;
     mutable int m_clpOutputNo;
     mutable int m_crpOutputNo;
+    std::map<int, FeatureDownsample *> m_downsamplers;
 
     void addFeatures(FeatureSet &, int outputNo, const RealBlock &);
 };

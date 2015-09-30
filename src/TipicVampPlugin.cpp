@@ -4,6 +4,7 @@
 #include "PitchFilterbank.h"
 #include "CRP.h"
 #include "Chroma.h"
+#include "FeatureDownsample.h"
 
 #include <bqvec/Range.h>
 #include <bqvec/VectorOps.h>
@@ -39,6 +40,8 @@ Tipic::~Tipic()
     delete m_crp;
     delete m_chroma;
     delete m_logChroma;
+
+    for (auto &d: m_downsamplers) delete d.second;
 }
 
 string
@@ -209,6 +212,11 @@ Tipic::getOutputDescriptors() const
     m_pitchOutputNo = list.size();
     list.push_back(d);
 
+    d.identifier += "-down";
+    d.name += " (Downsampled)";
+    d.sampleRate /= 10.0;
+    list.push_back(d);
+    
     d.identifier = "cp";
     d.name = "Chroma Pitch Features";
     d.description = "";
@@ -224,16 +232,33 @@ Tipic::getOutputDescriptors() const
     m_cpOutputNo = list.size();
     list.push_back(d);
 
+    d.identifier += "-down";
+    d.name += " (Downsampled)";
+    d.sampleRate /= 10.0;
+    list.push_back(d);
+
     d.identifier = "clp";
     d.name = "Chroma Log Pitch Features";
     d.description = "";
+    d.sampleRate = PitchFilterbank::getOutputSampleRate();
     m_clpOutputNo = list.size();
+    list.push_back(d);
+
+    d.identifier += "-down";
+    d.name += " (Downsampled)";
+    d.sampleRate /= 10.0;
     list.push_back(d);
 
     d.identifier = "crp";
     d.name = "Chroma DCT-Reduced Log Pitch Features";
     d.description = "";
+    d.sampleRate = PitchFilterbank::getOutputSampleRate();
     m_crpOutputNo = list.size();
+    list.push_back(d);
+
+    d.identifier += "-down";
+    d.name += " (Downsampled)";
+    d.sampleRate /= 10.0;
     list.push_back(d);
 
     return list;
@@ -296,6 +321,8 @@ Tipic::reset()
     }
     
     m_filterbank->reset();
+
+    for (auto &d: m_downsamplers) d.second->reset();
 }
 
 Tipic::FeatureSet
@@ -339,11 +366,29 @@ Tipic::getRemainingFeatures()
 void
 Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block)
 {
+    if (block.empty()) return;
+    
     for (int i = 0; in_range_for(block, i); ++i) {
 	Feature f;
 	int h = block[i].size();
 	f.values.resize(h);
 	v_convert(f.values.data(), block[i].data(), h);
 	fs[outputNo].push_back(f);
+    }
+
+    if (m_downsamplers.find(outputNo) == m_downsamplers.end()) {
+	FeatureDownsample::Parameters params;
+	params.featureSize = block[0].size();
+	m_downsamplers[outputNo] = new FeatureDownsample(params);
+    }
+
+    RealBlock downsampled = m_downsamplers[outputNo]->process(block);
+    
+    for (int i = 0; in_range_for(downsampled, i); ++i) {
+	Feature f;
+	int h = downsampled[i].size();
+	f.values.resize(h);
+	v_convert(f.values.data(), downsampled[i].data(), h);
+	fs[outputNo + 1].push_back(f);
     }
 }

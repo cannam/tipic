@@ -12,6 +12,11 @@
 
 using namespace std;
 
+Chroma::Chroma(Parameters params) :
+    m_params(params)
+{
+}
+
 Chroma::~Chroma()
 {
 }

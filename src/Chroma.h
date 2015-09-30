@@ -5,11 +5,6 @@
 
 #include "Types.h"
 
-//!!! Downsampling/temporal smoothing not yet implemented
-
-//!!! doc: this class has no history, can be used in more than one
-//!!! "channel" at once
-
 class Chroma
 {
 public:
@@ -28,7 +23,7 @@ public:
         { }
     };
 
-    Chroma(Parameters params) : m_params(params) { }
+    Chroma(Parameters params);
     ~Chroma();
 
     RealBlock process(const RealBlock &in);
