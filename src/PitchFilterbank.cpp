@@ -43,12 +43,8 @@ public:
 	// quantization close to 440Hz in 44.1kHz audio -- we could do
 	// better by using multiples of our source and target sample
 	// rates, but I think it probably isn't necessary.
-	m_effectiveInputSampleRate =
+	m_effectiveInputRate =
 	    int(round(m_sampleRate * (440.0 / m_tuningFrequency)));
-
-	//!!! todo: tuning frequency adjustment
-	// * resample input by a small amount
-	// * adjust output block timings by a small amount
 
 	//!!! nb "we use forward-backward filtering such that the
 	// resulting output signal has precisely zero phase distortion
@@ -56,10 +52,12 @@ public:
 	// magnitude response" -- we are not doing forward-backward
 	// here & so need to adapt magnitudes in compensation to match
 	// original
-	
-	m_resamplers[882] = new Resampler(m_effectiveInputSampleRate, 882);
-	m_resamplers[4410] = new Resampler(m_effectiveInputSampleRate, 4410);
-	m_resamplers[22050] = new Resampler(m_effectiveInputSampleRate, 22050);
+
+	double snr = 50.0;
+	double bw = 0.05;
+	m_resamplers[882] = new Resampler(m_effectiveInputRate, 882, snr, bw);
+	m_resamplers[4410] = new Resampler(m_effectiveInputRate, 4410, snr, bw);
+	m_resamplers[22050] = new Resampler(m_effectiveInputRate, 22050, snr, bw);
 	
 	for (int i = 0; i < m_nfilters; ++i) {
 	    int ix = i + 20;
@@ -128,23 +126,16 @@ public:
 	double rate = filterRate(i);
 	double topRate = 22050.0;
 	double rateRatio = topRate / rate;
-	double tuningRatio = m_sampleRate / double(m_effectiveInputSampleRate);
+	double tuningRatio = m_sampleRate / double(m_effectiveInputRate);
 	double sizeRatio = tuningRatio / rateRatio;
 
 	uint64_t start(round((hop * block) * sizeRatio));
 	int size(round((hop * 2) * sizeRatio));
 
-//	cerr << "block " << block << ", i " << i << ": start " << start << ", size "
-//	     << size << endl;
-	
 	return { start, size, rateRatio };
     }
     
     RealBlock energiesFromFiltered(bool drain) {
-
-	//!!! This is all quite inefficient -- we're counting
-	//!!! everything twice. Since there is no actual window shape,
-	//!!! isn't the overlap just averaging?
 
 	for (int i = 0; i < m_nfilters; ++i) {
 
@@ -157,12 +148,6 @@ public:
 	    unsigned int minReq = n;
 	    if (drain) minReq = hop;
 
-	    //!!! strictly, we don't actually need to store the
-	    //!!! filtered outputs since our overlapped windows are
-	    //!!! not shaped -- each one is the sum of two half-size
-	    //!!! windows, so we can just push the energies of those
-	    //!!! directly. that's a TODO
-	    
 	    while (m_filtered[i].size() >= minReq) {
 		double energy = calculateEnergy(m_filtered[i], n, here.factor);
 		m_energies[i].push_back(energy);
@@ -249,7 +234,7 @@ public:
 private:
     int m_nfilters;
     int m_sampleRate;
-    int m_effectiveInputSampleRate;
+    int m_effectiveInputRate;
     double m_tuningFrequency;
 
     // This vector is initialised with 88 filter instances.

@@ -95,7 +95,7 @@ depend:
 
 src/Filter.o: src/Filter.h bqvec/bqvec/Restrict.h bqvec/bqvec/VectorOps.h
 src/Filter.o: bqvec/bqvec/Restrict.h bqvec/bqvec/Allocators.h
-src/Filter.o: bqvec/bqvec/VectorOps.h
+src/Filter.o: bqvec/bqvec/Allocators.h
 src/PitchFilterbank.o: src/PitchFilterbank.h src/Types.h src/Filter.h
 src/PitchFilterbank.o: bqvec/bqvec/Restrict.h src/delays.h src/filter-a.h
 src/PitchFilterbank.o: src/filter-b.h
@@ -107,9 +107,11 @@ src/Chroma.o: src/Chroma.h src/Types.h src/Normalise.h src/LogCompress.h
 src/Chroma.o: src/OctaveFold.h src/Resize.h
 src/TipicVampPlugin.o: src/TipicVampPlugin.h src/Types.h
 src/TipicVampPlugin.o: src/PitchFilterbank.h src/CRP.h src/DCTReduce.h
-src/TipicVampPlugin.o: src/DCT.h bqvec/bqvec/Range.h bqvec/bqvec/VectorOps.h
-src/TipicVampPlugin.o: bqvec/bqvec/Restrict.h
+src/TipicVampPlugin.o: src/DCT.h src/Chroma.h bqvec/bqvec/Range.h
+src/TipicVampPlugin.o: bqvec/bqvec/VectorOps.h bqvec/bqvec/Restrict.h
+src/TipicVampPlugin.o: bqvec/bqvec/Allocators.h
 src/libmain.o: src/TipicVampPlugin.h src/Types.h
+bqvec/src/Allocators.o: bqvec/bqvec/Allocators.h
 src/test-filter.o: src/Filter.h bqvec/bqvec/Restrict.h
 src/test-dct.o: src/DCT.h
 src/test-normalise.o: src/Normalise.h
