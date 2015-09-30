@@ -34,8 +34,11 @@ private:
     int m_sz;
     double *m_a;
     double *m_b;
-    double *m_inbuf;
-    double *m_outbuf;
+    double *m_bufa;
+    double *m_bufb;
+    int m_offa;
+    int m_offb;
+    int m_offmax;
 
     Filter(const Filter &); // not supplied
     Filter &operator=(const Filter &); // not supplied
