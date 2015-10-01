@@ -8,6 +8,7 @@
 class PitchFilterbank;
 class CRP;
 class Chroma;
+class CENS;
 class FeatureDownsample;
 
 using std::string;
@@ -57,9 +58,11 @@ protected:
     CRP *m_crp;
     Chroma *m_chroma;
     Chroma *m_logChroma;
+    CENS *m_cens;
     mutable int m_pitchOutputNo;
     mutable int m_cpOutputNo;
     mutable int m_clpOutputNo;
+    mutable int m_censOutputNo;
     mutable int m_crpOutputNo;
     std::map<int, FeatureDownsample *> m_downsamplers;
 

@@ -4,6 +4,7 @@
 #include "PitchFilterbank.h"
 #include "CRP.h"
 #include "Chroma.h"
+#include "CENS.h"
 #include "FeatureDownsample.h"
 
 #include <bqvec/Range.h>
@@ -27,9 +28,11 @@ Tipic::Tipic(float inputSampleRate) :
     m_crp(0),
     m_chroma(0),
     m_logChroma(0),
+    m_cens(0),
     m_pitchOutputNo(-1),
     m_cpOutputNo(-1),
     m_clpOutputNo(-1),
+    m_censOutputNo(-1),
     m_crpOutputNo(-1)
 {
 }
@@ -40,6 +43,7 @@ Tipic::~Tipic()
     delete m_crp;
     delete m_chroma;
     delete m_logChroma;
+    delete m_cens;
 
     for (auto &d: m_downsamplers) delete d.second;
 }
@@ -249,6 +253,13 @@ Tipic::getOutputDescriptors() const
     d.sampleRate /= 10.0;
     list.push_back(d);
 
+    d.identifier = "cens";
+    d.name = "Chroma Energy Normalised Statistics Features";
+    d.description = "";
+    d.sampleRate = PitchFilterbank::getOutputSampleRate() / 10.0;
+    m_censOutputNo = list.size();
+    list.push_back(d);
+
     d.identifier = "crp";
     d.name = "Chroma DCT-Reduced Log Pitch Features";
     d.description = "";
@@ -281,6 +292,7 @@ Tipic::initialise(size_t channels, size_t stepSize, size_t blockSize)
     if (m_pitchOutputNo < 0 ||
 	m_cpOutputNo < 0 ||
 	m_clpOutputNo < 0 ||
+	m_censOutputNo < 0 ||
 	m_crpOutputNo < 0) {
 	throw std::logic_error("setup went wrong");
     }
@@ -318,6 +330,8 @@ Tipic::reset()
 	Chroma::Parameters params;
 	params.applyLogCompression = true;
 	m_logChroma = new Chroma(params);
+
+	m_cens = new CENS({});
     }
     
     m_filterbank->reset();
@@ -336,12 +350,14 @@ Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 
     RealBlock cp = m_chroma->process(pitchFiltered);
     RealBlock clp = m_logChroma->process(pitchFiltered);
+    RealBlock cens = m_cens->process(pitchFiltered);
     RealBlock crp = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
     addFeatures(fs, m_pitchOutputNo, pitchFiltered, false);
     addFeatures(fs, m_cpOutputNo, cp, false);
     addFeatures(fs, m_clpOutputNo, clp, false);
+    addFeatures(fs, m_censOutputNo, cens, false);
     addFeatures(fs, m_crpOutputNo, crp, false);
     return fs;
 }
@@ -353,12 +369,14 @@ Tipic::getRemainingFeatures()
 
     RealBlock cp = m_chroma->process(pitchFiltered);
     RealBlock clp = m_logChroma->process(pitchFiltered);
+    RealBlock cens = m_cens->process(pitchFiltered);
     RealBlock crp = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
     addFeatures(fs, m_pitchOutputNo, pitchFiltered, true);
     addFeatures(fs, m_cpOutputNo, cp, true);
     addFeatures(fs, m_clpOutputNo, clp, true);
+    addFeatures(fs, m_censOutputNo, cens, true);
     addFeatures(fs, m_crpOutputNo, crp, true);
     return fs;
 }
@@ -367,13 +385,21 @@ void
 Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block, bool final)
 {
     if (block.empty()) return;
-    
-    for (int i = 0; in_range_for(block, i); ++i) {
-	Feature f;
-	int h = block[i].size();
-	f.values.resize(h);
-	v_convert(f.values.data(), block[i].data(), h);
-	fs[outputNo].push_back(f);
+
+    int downsampledOutputNo = outputNo + 1;
+    if (outputNo == m_censOutputNo) {
+	// CENS exists only in downsampled form
+	downsampledOutputNo = outputNo;
+    }
+
+    if (outputNo != downsampledOutputNo) {
+	for (int i = 0; in_range_for(block, i); ++i) {
+	    Feature f;
+	    int h = block[i].size();
+	    f.values.resize(h);
+	    v_convert(f.values.data(), block[i].data(), h);
+	    fs[outputNo].push_back(f);
+	}
     }
     
     if (m_downsamplers.find(outputNo) == m_downsamplers.end()) {
@@ -394,6 +420,6 @@ Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block, bool fi
 	int h = downsampled[i].size();
 	f.values.resize(h);
 	v_convert(f.values.data(), downsampled[i].data(), h);
-	fs[outputNo + 1].push_back(f);
+	fs[downsampledOutputNo].push_back(f);
     }
 }

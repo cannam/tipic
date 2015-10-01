@@ -24,8 +24,34 @@ PLUGIN	       := tipic-vamp$(PLUGIN_EXT)
 
 PUBLIC_HEADERS	:=
 
-LIB_HEADERS	:= $(SRC_DIR)/delays.h $(SRC_DIR)/filter-a.h $(SRC_DIR)/filter-b.h $(SRC_DIR)/Filter.h $(SRC_DIR)/PitchFilterbank.h $(SRC_DIR)/DCT.h $(SRC_DIR)/Types.h $(SRC_DIR)/CRP.h $(SRC_DIR)/Normalise.h $(SRC_DIR)/LogCompress.h $(SRC_DIR)/OctaveFold.h $(SRC_DIR)/Resize.h $(SRC_DIR)/Chroma.h $(SRC_DIR)/FeatureDownsample.h
-LIB_SOURCES	:= $(SRC_DIR)/Filter.cpp $(SRC_DIR)/PitchFilterbank.cpp $(SRC_DIR)/DCT.cpp $(SRC_DIR)/CRP.cpp $(SRC_DIR)/Normalise.cpp $(SRC_DIR)/Chroma.cpp $(SRC_DIR)/FeatureDownsample.cpp
+LIB_HEADERS	:= \
+		$(SRC_DIR)/delays.h \
+		$(SRC_DIR)/filter-a.h \
+		$(SRC_DIR)/filter-b.h \
+		$(SRC_DIR)/Filter.h \
+		$(SRC_DIR)/PitchFilterbank.h \
+		$(SRC_DIR)/DCT.h \
+		$(SRC_DIR)/Types.h \
+		$(SRC_DIR)/CRP.h \
+		$(SRC_DIR)/Normalise.h \
+		$(SRC_DIR)/LogCompress.h \
+		$(SRC_DIR)/OctaveFold.h \
+		$(SRC_DIR)/Resize.h \
+		$(SRC_DIR)/Chroma.h \
+		$(SRC_DIR)/FeatureDownsample.h \
+		$(SRC_DIR)/Quantize.h \
+		$(SRC_DIR)/CENS.h
+
+LIB_SOURCES	:= \
+		$(SRC_DIR)/Filter.cpp \
+		$(SRC_DIR)/PitchFilterbank.cpp \
+		$(SRC_DIR)/DCT.cpp \
+		$(SRC_DIR)/CRP.cpp \
+		$(SRC_DIR)/Normalise.cpp \
+		$(SRC_DIR)/Chroma.cpp \
+		$(SRC_DIR)/FeatureDownsample.cpp \
+		$(SRC_DIR)/CENS.cpp
+		
 LIB_OBJECTS	:= $(LIB_SOURCES:.cpp=.o)
 LIB_OBJECTS	:= $(LIB_OBJECTS:.c=.o)
 
@@ -102,15 +128,17 @@ src/DCT.o: src/DCT.h
 src/CRP.o: src/CRP.h src/Types.h src/DCTReduce.h src/DCT.h src/Normalise.h
 src/CRP.o: src/LogCompress.h src/OctaveFold.h src/Resize.h
 src/Normalise.o: src/Normalise.h
-src/Chroma.o: src/Chroma.h src/Types.h src/FeatureDownsample.h
-src/Chroma.o: src/Normalise.h src/LogCompress.h src/OctaveFold.h src/Resize.h
+src/Chroma.o: src/Chroma.h src/Types.h src/Normalise.h src/LogCompress.h
+src/Chroma.o: src/OctaveFold.h src/Resize.h
 src/FeatureDownsample.o: src/FeatureDownsample.h src/Types.h src/Filter.h
-src/FeatureDownsample.o: bqvec/bqvec/Restrict.h
+src/FeatureDownsample.o: bqvec/bqvec/Restrict.h src/Normalise.h
+src/CENS.o: src/CENS.h src/Types.h src/Quantize.h src/Normalise.h
+src/CENS.o: src/OctaveFold.h src/Resize.h
 src/TipicVampPlugin.o: src/TipicVampPlugin.h src/Types.h
 src/TipicVampPlugin.o: src/PitchFilterbank.h src/CRP.h src/DCTReduce.h
-src/TipicVampPlugin.o: src/DCT.h src/Chroma.h src/FeatureDownsample.h
-src/TipicVampPlugin.o: bqvec/bqvec/Range.h bqvec/bqvec/VectorOps.h
-src/TipicVampPlugin.o: bqvec/bqvec/Restrict.h
+src/TipicVampPlugin.o: src/DCT.h src/Chroma.h src/CENS.h src/Quantize.h
+src/TipicVampPlugin.o: src/FeatureDownsample.h bqvec/bqvec/Range.h
+src/TipicVampPlugin.o: bqvec/bqvec/VectorOps.h bqvec/bqvec/Restrict.h
 src/libmain.o: src/TipicVampPlugin.h src/Types.h
 src/test-filter.o: src/Filter.h bqvec/bqvec/Restrict.h
 src/test-dct.o: src/DCT.h
@@ -118,6 +146,7 @@ src/test-normalise.o: src/Normalise.h
 src/Filter.o: bqvec/bqvec/Restrict.h
 src/PitchFilterbank.o: src/Types.h
 src/CRP.o: src/Types.h src/DCTReduce.h src/DCT.h
-src/Chroma.o: src/Types.h src/FeatureDownsample.h
+src/Chroma.o: src/Types.h
 src/FeatureDownsample.o: src/Types.h
+src/CENS.o: src/Types.h src/Quantize.h
 src/TipicVampPlugin.o: src/Types.h
