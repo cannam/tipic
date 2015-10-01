@@ -27,6 +27,13 @@ Filter::Filter(Parameters params)
     m_sz = int(params.b.size());
     m_order = m_sz - 1;
 
+    // We keep some empty space at the start of the buffer, and
+    // encroach gradually into it as we add individual sample
+    // calculations at the start. Then when we run out of space, we
+    // move the buffer back to the end and begin again. This is
+    // significantly faster than moving the whole buffer along in
+    // 1-sample steps every time.
+    
     m_offmax = 20;
     m_offa = m_offmax;
     m_offb = m_offmax;
