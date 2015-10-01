@@ -23,12 +23,19 @@ FeatureDownsample::FeatureDownsample(Parameters params) :
     vector<double> wd(w.getWindowData());
     wd.push_back(wd[0]);
 
+    double divisor = 0.0;
+    for (auto x: wd) divisor += x;
+    for (auto &x: wd) x /= divisor;
+
     // FIR filter
     for (int i = 0; i < m_params.featureSize; ++i) {
 	m_filters.push_back(new Filter({ {}, wd }));
     }
 
-    m_toNext = params.downsampleFactor;
+    m_toNext = 1;
+    m_toDrop = m_params.windowLength / 2;
+    m_inCount = 0;
+    m_outCount = 0;
 }
 
 FeatureDownsample::~FeatureDownsample()
@@ -40,17 +47,24 @@ void
 FeatureDownsample::reset()
 {
     for (auto &f: m_filters) f->reset();
+    m_toNext = 1;
+    m_toDrop = m_params.windowLength / 2;
+    m_inCount = 0;
+    m_outCount = 0;
 }
 
 RealBlock
 FeatureDownsample::process(const RealBlock &in)
 {
-    //!!! todo: adjust for delay
-    
     RealBlock out;
+    
     for (const auto &col: in) {
 	RealColumn outcol;
-	--m_toNext;
+	if (m_toDrop > 0) {
+	    --m_toDrop;
+	} else {
+	    --m_toNext;
+	}
 	for (int i = 0; i < m_params.featureSize; ++i) {
 	    double val = 0.0;
 	    m_filters[i]->process(&col[i], &val, 1);
@@ -61,8 +75,27 @@ FeatureDownsample::process(const RealBlock &in)
 	if (m_toNext == 0) {
 	    out.push_back(outcol);
 	    m_toNext = m_params.downsampleFactor;
+	    ++m_outCount;
 	}
+	++m_inCount;
+    }
+    
+    return out;
+}
+
+RealBlock
+FeatureDownsample::getRemainingOutput()
+{
+    RealBlock pad(m_params.windowLength, RealColumn(m_params.featureSize, 0.0));
+    RealBlock tail = process(pad);
+    int expected = m_inCount / m_params.downsampleFactor;
+    RealBlock out;
+    for (int i = 0;
+	 m_outCount < expected && i < int(tail.size());
+	 ++i, ++m_outCount) {
+	out.push_back(tail[i]);
     }
     return out;
 }
+
 

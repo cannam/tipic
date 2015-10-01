@@ -339,10 +339,10 @@ Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
     RealBlock crp = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
-    addFeatures(fs, m_pitchOutputNo, pitchFiltered);
-    addFeatures(fs, m_cpOutputNo, cp);
-    addFeatures(fs, m_clpOutputNo, clp);
-    addFeatures(fs, m_crpOutputNo, crp);
+    addFeatures(fs, m_pitchOutputNo, pitchFiltered, false);
+    addFeatures(fs, m_cpOutputNo, cp, false);
+    addFeatures(fs, m_clpOutputNo, clp, false);
+    addFeatures(fs, m_crpOutputNo, crp, false);
     return fs;
 }
 
@@ -356,15 +356,15 @@ Tipic::getRemainingFeatures()
     RealBlock crp = m_crp->process(pitchFiltered);
 
     FeatureSet fs;
-    addFeatures(fs, m_pitchOutputNo, pitchFiltered);
-    addFeatures(fs, m_cpOutputNo, cp);
-    addFeatures(fs, m_clpOutputNo, clp);
-    addFeatures(fs, m_crpOutputNo, crp);
+    addFeatures(fs, m_pitchOutputNo, pitchFiltered, true);
+    addFeatures(fs, m_cpOutputNo, cp, true);
+    addFeatures(fs, m_clpOutputNo, clp, true);
+    addFeatures(fs, m_crpOutputNo, crp, true);
     return fs;
 }
 
 void
-Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block)
+Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block, bool final)
 {
     if (block.empty()) return;
     
@@ -383,6 +383,11 @@ Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block)
     }
 
     RealBlock downsampled = m_downsamplers[outputNo]->process(block);
+
+    if (final) {
+	RealBlock remaining = m_downsamplers[outputNo]->getRemainingOutput();
+	downsampled.insert(downsampled.end(), remaining.begin(), remaining.end());
+    }
     
     for (int i = 0; in_range_for(downsampled, i); ++i) {
 	Feature f;

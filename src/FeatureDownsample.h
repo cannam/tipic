@@ -30,11 +30,15 @@ public:
 
     void reset();
     RealBlock process(const RealBlock &in);
+    RealBlock getRemainingOutput();
     
 private:
     Parameters m_params;
     std::vector<Filter *> m_filters;
+    int m_toDrop;
     int m_toNext;
+    int m_inCount;
+    int m_outCount;
 };
 
 #endif
