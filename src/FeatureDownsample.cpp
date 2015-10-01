@@ -4,6 +4,7 @@
 
 #include "Filter.h"
 #include "Window.h"
+#include "Normalise.h"
 
 #include <stdexcept>
 
@@ -19,9 +20,9 @@ FeatureDownsample::FeatureDownsample(Parameters params) :
 
     // Our windows are periodic rather than symmetric, but we want a
     // symmetric window here
-    Window<double> w(HanningWindow, params.windowLength - 1);
-    vector<double> wd(w.getWindowData());
-    wd.push_back(wd[0]);
+    Window<double> w(HanningWindow, params.windowLength + 1);
+    vector<double> wdat(w.getWindowData());;
+    vector<double> wd(wdat.begin()+1, wdat.end());
 
     double divisor = 0.0;
     for (auto x: wd) divisor += x;
@@ -73,7 +74,8 @@ FeatureDownsample::process(const RealBlock &in)
 	    }
 	}
 	if (m_toNext == 0) {
-	    out.push_back(outcol);
+	    out.push_back(Normalise::normalise
+			  (outcol, m_params.normP, m_params.normThresh));
 	    m_toNext = m_params.downsampleFactor;
 	    ++m_outCount;
 	}
@@ -93,7 +95,8 @@ FeatureDownsample::getRemainingOutput()
     for (int i = 0;
 	 m_outCount < expected && i < int(tail.size());
 	 ++i, ++m_outCount) {
-	out.push_back(tail[i]);
+	out.push_back(Normalise::normalise
+		      (tail[i], m_params.normP, m_params.normThresh));
     }
     return out;
 }

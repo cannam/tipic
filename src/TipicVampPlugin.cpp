@@ -217,7 +217,7 @@ Tipic::getOutputDescriptors() const
     d.sampleRate /= 10.0;
     list.push_back(d);
     
-    d.identifier = "cp";
+    d.identifier = "chroma";
     d.name = "Chroma Pitch Features";
     d.description = "";
     d.unit = "";
@@ -375,7 +375,7 @@ Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block, bool fi
 	v_convert(f.values.data(), block[i].data(), h);
 	fs[outputNo].push_back(f);
     }
-
+    
     if (m_downsamplers.find(outputNo) == m_downsamplers.end()) {
 	FeatureDownsample::Parameters params;
 	params.featureSize = block[0].size();

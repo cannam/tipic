@@ -18,10 +18,14 @@ public:
 	int featureSize;
 	int downsampleFactor;
 	int windowLength;
+        int normP; // 0 = no normalisation, 1 = L^1, 2 = L^2
+        double normThresh;
 	Parameters() :
 	    featureSize(1),
 	    downsampleFactor(10),
-	    windowLength(41)
+	    windowLength(41),
+	    normP(2),
+	    normThresh(1e-6)
 	{ }
     };
 
