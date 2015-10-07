@@ -7,15 +7,10 @@
 #include "CENS.h"
 #include "FeatureDownsample.h"
 
-#include <bqvec/Range.h>
-#include <bqvec/VectorOps.h>
-
 #include <iostream>
 #include <sstream>
 
 using namespace std;
-
-using namespace breakfastquay;
 
 static const float defaultTuningFrequency = 440.f;
 
@@ -334,7 +329,9 @@ Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 {
     RealSequence in;
     in.resize(m_blockSize);
-    v_convert(in.data(), inputBuffers[0], m_blockSize);
+    for (int i = 0; i < m_blockSize; ++i) {
+	in[i] = inputBuffers[0][i];
+    }
     
     RealBlock pitchFiltered = m_filterbank->process(in);
 
@@ -382,12 +379,16 @@ Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block, bool fi
 	downsampledOutputNo = outputNo;
     }
 
+    int n = block.size();
+    
     if (outputNo != downsampledOutputNo) {
-	for (int i = 0; in_range_for(block, i); ++i) {
+	for (int i = 0; i < n; ++i) {
 	    Feature f;
 	    int h = block[i].size();
 	    f.values.resize(h);
-	    v_convert(f.values.data(), block[i].data(), h);
+	    for (int j = 0; j < h; ++j) {
+		f.values[j] = block[i][j];
+	    }
 	    fs[outputNo].push_back(f);
 	}
     }
@@ -404,12 +405,16 @@ Tipic::addFeatures(FeatureSet &fs, int outputNo, const RealBlock &block, bool fi
 	RealBlock remaining = m_downsamplers[outputNo]->getRemainingOutput();
 	downsampled.insert(downsampled.end(), remaining.begin(), remaining.end());
     }
+
+    n = downsampled.size();
     
-    for (int i = 0; in_range_for(downsampled, i); ++i) {
+    for (int i = 0; i < n; ++i) {
 	Feature f;
 	int h = downsampled[i].size();
 	f.values.resize(h);
-	v_convert(f.values.data(), downsampled[i].data(), h);
+	for (int j = 0; j < h; ++j) {
+	    f.values[j] = downsampled[i][j];
+	}
 	fs[downsampledOutputNo].push_back(f);
     }
 }

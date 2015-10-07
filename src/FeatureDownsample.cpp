@@ -1,10 +1,22 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
+/*
+    Tipic
+
+    Centre for Digital Music, Queen Mary, University of London.
+
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation; either version 2 of the
+    License, or (at your option) any later version.  See the file
+    COPYING included with this distribution for more information.
+*/
+
 #include "FeatureDownsample.h"
 
-#include "Filter.h"
-#include "Window.h"
-#include "Normalise.h"
+#include "dsp/signalconditioning/Filter.h"
+#include "base/Window.h"
+#include "maths/MathUtilities.h"
 
 #include <stdexcept>
 
@@ -74,7 +86,7 @@ FeatureDownsample::process(const RealBlock &in)
 	    }
 	}
 	if (m_toNext == 0) {
-	    out.push_back(Normalise::normalise
+	    out.push_back(MathUtilities::normaliseLp
 			  (outcol, m_params.normP, m_params.normThresh));
 	    m_toNext = m_params.downsampleFactor;
 	    ++m_outCount;
@@ -95,7 +107,7 @@ FeatureDownsample::getRemainingOutput()
     for (int i = 0;
 	 m_outCount < expected && i < int(tail.size());
 	 ++i, ++m_outCount) {
-	out.push_back(Normalise::normalise
+	out.push_back(MathUtilities::normaliseLp
 		      (tail[i], m_params.normP, m_params.normThresh));
     }
     return out;
