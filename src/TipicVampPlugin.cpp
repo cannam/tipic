@@ -63,33 +63,25 @@ Tipic::getName() const
 string
 Tipic::getDescription() const
 {
-    // Return something helpful here!
-    return "";
+    return "Pitch and chroma features with optional DCT timbre reduction.";
 }
 
 string
 Tipic::getMaker() const
 {
-    // Your name here
-    return "";
+    return "Queen Mary, University of London";
 }
 
 int
 Tipic::getPluginVersion() const
 {
-    // Increment this each time you release a version that behaves
-    // differently from the previous one
-    return 1;
+    return 0;
 }
 
 string
 Tipic::getCopyright() const
 {
-    // This function is not ideally named.  It does not necessarily
-    // need to say who made the plugin -- getMaker does that -- but it
-    // should indicate the terms under which it is distributed.  For
-    // example, "Copyright (year). All Rights Reserved", or "GPL"
-    return "";
+    return "Methods by Sebastian Ewert and Meinard Müller, pluguin by Chris Cannam. GPL licence.";
 }
 
 Tipic::InputDomain
@@ -101,15 +93,13 @@ Tipic::getInputDomain() const
 size_t
 Tipic::getPreferredBlockSize() const
 {
-    return 0; // 0 means "I can handle any block size"
+    return 0;
 }
 
 size_t 
 Tipic::getPreferredStepSize() const
 {
-    return 0; // 0 means "anything sensible"; in practice this
-              // means the same as the block size for TimeDomain
-              // plugins, or half of it for FrequencyDomain plugins
+    return 0;
 }
 
 size_t
