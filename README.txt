@@ -21,6 +21,18 @@ See the Chroma Toolbox,
 for the original MATLAB implementations of these methods.
 
 
+Dependency
+----------
+
+This code depends on the qm-dsp library:
+
+    https://code.soundsoftware.ac.uk/projects/qm-dsp
+
+If you have cloned this code from the Mercurial repository hosted at
+SoundSoftware, you should have got qm-dsp as well as a subdirectory
+(it's listed as a Mercurial subrepository).
+
+
 Authors
 -------
 

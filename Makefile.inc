@@ -19,7 +19,7 @@ LDFLAGS := $(LDFLAGS)
 PLUGIN_LDFLAGS := $(LDFLAGS) $(PLUGIN_LDFLAGS)
 
 LIBRARY	       := libtipic.a
-PLUGIN	       := tipic-vamp$(PLUGIN_EXT)
+PLUGIN	       := tipic$(PLUGIN_EXT)
 
 PUBLIC_HEADERS	:=
 
