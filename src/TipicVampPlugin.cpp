@@ -52,13 +52,13 @@ Tipic::getIdentifier() const
 string
 Tipic::getName() const
 {
-    return "Timbre-Invariant Pitch Chroma";
+    return "TIPIC";
 }
 
 string
 Tipic::getDescription() const
 {
-    return "Pitch and chroma features with optional DCT timbre reduction.";
+    return "Chroma and pitch features, including DCT-reduced chroma with extra timbre invariance. Based on the MATLAB Chroma Toolbox by Müller and Ewert, adapted to use causal filters.";
 }
 
 string
@@ -70,7 +70,7 @@ Tipic::getMaker() const
 int
 Tipic::getPluginVersion() const
 {
-    return 0;
+    return 1;
 }
 
 string
@@ -180,10 +180,14 @@ Tipic::getOutputDescriptors() const
 {
     OutputList list;
 
+    string downIdSuffix = "-smoothed";
+    string downNamePrefix = "Smoothed ";
+    string downDescSuffix = ", smoothed by 10x downsampling";
+    
     OutputDescriptor d;
     d.identifier = "pitch";
-    d.name = "Pitch Features";
-    d.description = "";
+    d.name = "Pitch Representation";
+    d.description = "Short-time energy content of the signal within 88 semitone-tuned frequency bands";
     d.unit = "";
     d.hasFixedBinCount = true;
     int min = 0, max = 0;
@@ -201,14 +205,15 @@ Tipic::getOutputDescriptors() const
     m_pitchOutputNo = list.size();
     list.push_back(d);
 
-    d.identifier += "-down";
-    d.name += " (Downsampled)";
+    d.identifier += downIdSuffix;
+    d.name = downNamePrefix + d.name;
+    d.description += downDescSuffix;
     d.sampleRate /= 10.0;
     list.push_back(d);
     
     d.identifier = "chroma";
     d.name = "Chroma Pitch Features";
-    d.description = "";
+    d.description = "CP Chroma Pitch features derived by summing the Pitch Representation into a single octave";
     d.unit = "";
     d.hasFixedBinCount = true;
     d.binCount = 12;
@@ -221,39 +226,42 @@ Tipic::getOutputDescriptors() const
     m_cpOutputNo = list.size();
     list.push_back(d);
 
-    d.identifier += "-down";
-    d.name += " (Downsampled)";
+    d.identifier += downIdSuffix;
+    d.name = downNamePrefix + d.name;
+    d.description += downDescSuffix;
     d.sampleRate /= 10.0;
     list.push_back(d);
 
     d.identifier = "clp";
     d.name = "Chroma Log Pitch Features";
-    d.description = "";
+    d.description = "CLP Chroma Logarithmic Pitch features derived by summing log of the Pitch Representation energy values into a single octave";
     d.sampleRate = PitchFilterbank::getOutputSampleRate();
     m_clpOutputNo = list.size();
     list.push_back(d);
 
-    d.identifier += "-down";
-    d.name += " (Downsampled)";
+    d.identifier += downIdSuffix;
+    d.name = downNamePrefix + d.name;
+    d.description += downDescSuffix;
     d.sampleRate /= 10.0;
     list.push_back(d);
 
     d.identifier = "cens";
     d.name = "Chroma Energy Normalised Statistics Features";
-    d.description = "";
+    d.description = "CENS statistical features based on L1 normalized pitch energy distribions";
     d.sampleRate = PitchFilterbank::getOutputSampleRate() / 10.0;
     m_censOutputNo = list.size();
     list.push_back(d);
 
     d.identifier = "crp";
-    d.name = "Chroma DCT-Reduced Log Pitch Features";
-    d.description = "";
+    d.name = "Chroma DCT-Reduced Pitch Features";
+    d.description = "CRP Chroma DCT-Reduced Log Pitch features, providing some timbre-invariance by discarding timbre-related information from lower cepstral coefficients";
     d.sampleRate = PitchFilterbank::getOutputSampleRate();
     m_crpOutputNo = list.size();
     list.push_back(d);
 
-    d.identifier += "-down";
-    d.name += " (Downsampled)";
+    d.identifier += downIdSuffix;
+    d.name = downNamePrefix + d.name;
+    d.description += downDescSuffix;
     d.sampleRate /= 10.0;
     list.push_back(d);
 
