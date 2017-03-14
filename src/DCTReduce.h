@@ -36,7 +36,7 @@ public:
 	    m_dctOut[i] = 0.0;
 	}
 	m_dct.inverse(m_dctOut.data(), out.data());
-	return std::move(out);
+	return out;
     }
     
 private:

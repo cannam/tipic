@@ -29,7 +29,7 @@ public:
 	for (auto x: in) {
 	    out.push_back(log10(addTerm + factor * x));
 	}
-	return std::move(out);
+	return out;
     }
 };
 

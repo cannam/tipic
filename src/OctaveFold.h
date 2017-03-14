@@ -25,7 +25,7 @@ public:
 	for (int i = 0; i < int(in.size()); ++i) {
 	    out[(i+1) % 12] += in[i];
 	}
-	return std::move(out);
+	return out;
     }
 };
 
