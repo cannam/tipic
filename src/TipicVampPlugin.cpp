@@ -159,7 +159,7 @@ Tipic::getCurrentProgram() const
 }
 
 void
-Tipic::selectProgram(string name)
+Tipic::selectProgram(string)
 {
 }
 
@@ -333,7 +333,7 @@ Tipic::reset()
 }
 
 Tipic::FeatureSet
-Tipic::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
+Tipic::process(const float *const *inputBuffers, Vamp::RealTime)
 {
     RealSequence in;
     in.resize(m_blockSize);
