@@ -76,7 +76,7 @@ Tipic::getPluginVersion() const
 string
 Tipic::getCopyright() const
 {
-    return "Methods by Sebastian Ewert and Meinard Müller, pluguin by Chris Cannam. GPL licence.";
+    return "Methods by Sebastian Ewert and Meinard Müller, plugin by Chris Cannam. GPL licence.";
 }
 
 Tipic::InputDomain

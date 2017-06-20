@@ -47,7 +47,7 @@ plugbase:tipic a vamp:Plugin ;
     vamp:name             "Timbre-Invariant Pitch Chroma" ;
     dc:description        """Pitch and chroma features with optional DCT timbre reduction.""" ;
     foaf:maker            :library_maker ;
-    dc:rights             """Methods by Sebastian Ewert and Meinard Müller, pluguin by Chris Cannam. GPL licence.""" ;
+    dc:rights             """Methods by Sebastian Ewert and Meinard Müller, plugin by Chris Cannam. GPL licence.""" ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "tipic" ;
     vamp:vamp_API_version vamp:api_version_2 ;
