@@ -21,9 +21,9 @@
 ## Maker of the whole plugin library
 
 :library_maker
-    foaf:name  "Queen Mary, University of London" ;
-#   foaf:page  <> ;  # Place maker's homepage URL in here and uncomment
-#   foaf:logo  <> ;  # URL of an image here, if you happen to have a logo
+    foaf:name "Queen Mary, University of London" ;
+    foaf:logo <http://vamp-plugins.org/rdf/plugins/makers/qm.png> ;
+    foaf:page <http://c4dm.eecs.qmul.ac.uk/>
     .
 
 
@@ -33,10 +33,10 @@ plugbase:library a vamp:PluginLibrary ;
     vamp:identifier        "tipic" ;
     foaf:maker             :library_maker ; 
     vamp:available_plugin  plugbase:tipic ; 
-#   dc:title               "" ;  # Place library name here and uncomment
-#   dc:description         "" ;  # Place library description here and uncomment
-#   foaf:page              <> ;  # Place more-info HTML page URL here and uncomment
-#   doap:download-page     <> ;  # Place download HTML page URL here and uncomment
+    dc:title               "Tipic - Tibre-Invariant Pitch Chroma" ;
+    dc:description         """Pitch-chroma audio features approaching timbre invariance, after the paper "Towards timbre-invariant audio features for harmony-based music" by Meinard Müller and Sebastian Ewert""" ;
+    foaf:page              <http://code.soundsoftware.ac.uk/projects/tipic> ;
+    doap:download-page     <http://code.soundsoftware.ac.uk/projects/tipic/files> ;
     .
 
 
