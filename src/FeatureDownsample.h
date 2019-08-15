@@ -19,8 +19,12 @@
 
 #include "Types.h"
 
-//!!! doc: class maintains state
-
+/**
+ * Downsample a feature by a factor in time.
+ *
+ * This class retains internal history, so a single instance per
+ * channel or feature type is required. It is also not thread-safe.
+ */
 class Filter;
 
 class FeatureDownsample

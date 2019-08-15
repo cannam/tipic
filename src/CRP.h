@@ -18,11 +18,14 @@
 #include "Types.h"
 #include "DCTReduce.h"
 
-//!!! Downsampling/temporal smoothing not yet implemented
-
-//!!! doc: this class has no history, can be used in more than one
-//!!! "channel" at once
-
+/**
+ * Turn features obtained from a PitchFilterbank into timbre-invariant
+ * pitch chroma (CRP) features. No downsampling/smoothing is applied.
+ *
+ * This class retains no internal history, so a single instance could
+ * be used for multiple channels at once, interleaved, within a single
+ * thread. It is not thread-safe.
+ */
 class CRP
 {
 public:

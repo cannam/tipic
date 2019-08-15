@@ -17,6 +17,15 @@
 
 #include "Types.h"
 
+/**
+ * Turn features obtained from a PitchFilterbank into pitch chroma
+ * features (without the timbre-invariant DCT step used for CRP
+ * features). No downsampling/smoothing is applied.
+ *
+ * This class retains no internal history, so a single instance could
+ * be used for multiple channels at once, interleaved, within a single
+ * thread. It is not thread-safe.
+ */
 class Chroma
 {
 public:
