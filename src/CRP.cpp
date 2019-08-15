@@ -42,18 +42,24 @@ CRP::process(const RealBlock &in)
     RealBlock out;
 
     for (RealColumn col: in) {
-
-	if (m_params.applyLogCompression) {
-            col = LogCompress::process(col, m_params.logFactor, m_params.logAddTerm);
-	}
-
-        out.push_back(MathUtilities::normaliseLp
-                      (OctaveFold::process
-                       (m_dctReduce.process
-                        (Resize::process(col))),
-                       m_params.normP, m_params.normThresh));
-    }        
+        out.push_back(process(col));
+    }
 
     return out;
+}
+
+RealColumn
+CRP::process(RealColumn col)
+{
+    if (m_params.applyLogCompression) {
+        col = LogCompress::process
+            (col, m_params.logFactor, m_params.logAddTerm);
+    }
+
+    return MathUtilities::normaliseLp
+        (OctaveFold::process
+         (m_dctReduce.process
+          (Resize::process(col))),
+         m_params.normP, m_params.normThresh);
 }
 

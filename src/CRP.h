@@ -49,7 +49,15 @@ public:
     CRP(Parameters params);
     ~CRP();
 
+    /**
+     * Process a block as produced by PitchFilterbank.
+     */
     RealBlock process(const RealBlock &in);
+
+    /**
+     * Process a single column.
+     */
+    RealColumn process(RealColumn col);
     
 private:
     Parameters m_params;
