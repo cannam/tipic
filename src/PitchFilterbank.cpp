@@ -25,6 +25,7 @@
 #include <map>
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 
 #include <cmath>
 
