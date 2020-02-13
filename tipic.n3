@@ -51,7 +51,7 @@ plugbase:tipic a vamp:Plugin ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "tipic" ;
     vamp:vamp_API_version vamp:api_version_2 ;
-    owl:versionInfo       "0" ;
+    owl:versionInfo       "1" ;
     vamp:input_domain     vamp:TimeDomain ;
     vamp:parameter   plugbase:tipic_param_tuning ;
 
